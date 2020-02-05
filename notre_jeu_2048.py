@@ -1,9 +1,14 @@
+# -*- coding: utf-8 -*-
 """
-Clone of 2048 game.
+Created on Wed Jan 29 13:52:25 2020
+
+@author: alexa
 """
 
-#import poc_2048_gui
 import random
+from PyQt5 import QtCore, QtWidgets
+
+grid_height, grid_width = 4,4
 
 # Directions, DO NOT MODIFY
 UP = 1
@@ -177,4 +182,63 @@ class TwentyFortyEight:
         """        
         return self.tiles[row][col]
 
-#poc_2048_gui.run_gui(TwentyFortyEight(5, 6))
+
+class Settings():
+
+       WIDTH = 20
+       HEIGHT = 20
+       NUM_BLOCKS_X = 4
+       NUM_BLOCKS_Y = 4
+
+class MyWidget(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        super(MyWidget, self).__init__(parent)
+        
+        # boutons des actions à définir : left, right, up, down
+        self.lay = QtWidgets.QHBoxLayout()
+        self.setLayout(self.lay)
+        
+        self.button = QtWidgets.QPushButton("left", parent=self)
+        self.button2 = QtWidgets.QPushButton("right", parent=self)
+        self.button3 = QtWidgets.QPushButton("up", parent=self)
+        self.button4 = QtWidgets.QPushButton("down", parent=self)
+        
+        self.lay.addWidget(self.button)
+        self.lay.addWidget(self.button2)
+        self.lay.addWidget(self.button3)
+        self.lay.addWidget(self.button4)
+        
+        self.button.clicked.connect(self.update_gui)
+        
+        # Grille de jeu
+        
+#        self.grille = QtWidgets.QGridLayout()
+#        self.lay.addWidget(self.grille)
+        
+        self.table = QtWidgets.QTableWidget(self)
+        self.nbrow, self.nbcol = 4, 4
+        self.table.setRowCount(self.nbrow)
+        self.table.setColumnCount(self.nbcol)
+        self.lay.addWidget(self.table)
+        
+        self.show()
+        
+        
+    def update_gui(self):
+        print('coucou')
+
+
+
+if __name__=='__main__':
+    APP = QtWidgets.QApplication.instance()
+    IS_STANDARD_CONSOLE = (APP is None)
+    if IS_STANDARD_CONSOLE: # launched from standard console (not ipython console)
+        APP = QtWidgets.QApplication(["test"])
+    M = MyWidget()
+    if IS_STANDARD_CONSOLE:
+        APP.exec_()
+
+
+
+
+
