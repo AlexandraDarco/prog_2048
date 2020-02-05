@@ -4,7 +4,7 @@ Created on Wed Feb  5 18:01:03 2020
 
 @author: cecil
 """
-import sys
+
 from PyQt5 import QtCore, QtWidgets,QtGui
 import random
 
@@ -56,6 +56,10 @@ class MyWidget(QtWidgets.QWidget):
         self.tileSize = (width-self.tileMargin*(self.gridSize+1))/self.gridSize
         self.font = QtGui.QFont('Arial',self.tileSize/4)
         
+    def changeGridSize(self,x):
+        self.gridSize = x
+        self.reset_game()
+    
     def reset_game(self): #FINIE
         self.tiles = [[None for i in range(0,self.gridSize)] for i in range (0,self.gridSize)]
         self.availableSpots = list(range(0,self.gridSize**2))
@@ -73,6 +77,86 @@ class MyWidget(QtWidgets.QWidget):
             indy = ind//self.gridSize
             self.tiles[indx][indy] = Tile(value)
             
+    def up(self):
+        moved = False
+        for gridX in range(0,self.gridSize):
+            for gridY in range(1,self.gridSize):
+                if self.tiles[gridX][gridY] is not None:
+                    i = gridY
+                    while i-1>=0 and self.tiles[gridX][i-1] is  None:
+                        i -= 1
+                    if i-1>=0 and self.tiles[gridX][i-1].value==self.tiles[gridX][gridY].value:
+                        self.score += self.tiles[gridX][gridY].value*2
+                        self.tiles[gridX][i-1].value *= 2
+                        self.tiles[gridX][gridY] = None
+                        moved = True
+                    elif i<gridY:
+                        self.tiles[gridX][i] = self.tiles[gridX][gridY]
+                        self.tiles[gridX][gridY] = None
+                        moved = True
+        if moved:
+            self.updateTiles()
+            
+    def down(self):
+        moved = False
+        for gridX in range(0,self.gridSize):
+            for gridY in range(self.gridSize-2,-1,-1):
+                if self.tiles[gridX][gridY] is not None:
+                    i = gridY
+                    while i+1<self.gridSize and self.tiles[gridX][i+1] is None:
+                        i += 1
+                    if i+1<self.gridSize and self.tiles[gridX][i+1].value==self.tiles[gridX][gridY].value:
+                        self.score += self.tiles[gridX][gridY].value*2
+                        self.tiles[gridX][i+1].value *= 2
+                        self.tiles[gridX][gridY] = None
+                        moved = True
+                    elif i>gridY:
+                        self.tiles[gridX][i] = self.tiles[gridX][gridY]
+                        self.tiles[gridX][gridY] = None
+                        moved = True
+        if moved:
+           self.updateTiles()
+           
+    def left(self):
+        moved = False
+        for gridX in range(1,self.gridSize):
+            for gridY in range(0,self.gridSize):
+                if self.tiles[gridX][gridY] is not None:
+                    i = gridX
+                    while i-1>=0 and self.tiles[i-1][gridY] is None:
+                        i -= 1
+                    if i-1>=0 and self.tiles[i-1][gridY].value==self.tiles[gridX][gridY].value:
+                        self.score += self.tiles[gridX][gridY].value*2
+                        self.tiles[i-1][gridY].value *= 2
+                        self.tiles[gridX][gridY] = None
+                        moved = True
+                    elif i<gridX:
+                        self.tiles[i][gridY] = self.tiles[gridX][gridY]
+                        self.tiles[gridX][gridY] = None
+                        moved = True
+        if moved:
+            self.updateTiles()
+            
+    def right(self):
+        moved = False
+        for gridX in range(self.gridSize-2,-1,-1):
+            for gridY in range(0,self.gridSize):
+                if self.tiles[gridX][gridY] is not None:
+                    i = gridX
+                    while i+1<self.gridSize and self.tiles[i+1][gridY] is None:
+                        i +=1
+                    if i+1<self.gridSize and self.tiles[i+1][gridY].value==self.tiles[gridX][gridY].value:
+                        self.score += self.tiles[gridX][gridY].value*2
+                        self.tiles[i+1][gridY].value *= 2
+                        self.tiles[gridX][gridY] = None
+                        moved = True
+                    elif i>gridX:
+                        self.tiles[i][gridY] = self.tiles[gridX][gridY]
+                        self.tiles[gridX][gridY] = None
+                        moved = True
+        if moved:
+            self.updateTiles()
+        
     def updateTiles(self):
         self.availableSpots = []
         for i in range(0,self.gridSize):
@@ -80,6 +164,7 @@ class MyWidget(QtWidgets.QWidget):
                 if self.tiles[i][j] is None:
                     self.availableSpots.append(i+j*self.gridSize)
         self.addTile()
+        self.hiScore = max(self.score,self.hiScore)
         self.update()
         if not self.movesAvailable():
             self.gameRunning = False
@@ -95,6 +180,22 @@ class MyWidget(QtWidgets.QWidget):
                 if j<self.gridSize-1 and self.tiles[i][j].value==self.tiles[i][j+1].value:
                     return True
         return False
+    
+    def keyPressEvent(self,e):
+        if not self.gameRunning:
+            return
+        if e.key() == QtCore.Qt.Key_Escape:
+            self.reset_game()
+        elif e.key() == QtCore.Qt.Key_Up:
+            self.up()
+        elif e.key() == QtCore.Qt.Key_Down:
+            self.down()
+        elif e.key() == QtCore.Qt.Key_Left:
+            self.left()
+        elif e.key() == QtCore.Qt.Key_Right:
+            self.right()
+            
+    
     
     def paintEvent(self,event):
         painter = QtGui.QPainter(self)
