@@ -27,7 +27,7 @@ class MyWidget(QtWidgets.QWidget):
         
     def update_gui(self):
         print('coucou')
-
+jjdhc
 
 
 if __name__=='__main__':
