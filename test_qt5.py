@@ -15,7 +15,33 @@ class Tile:
 class MyWidget(QtWidgets.QWidget):
     def __init__(self, parent, width=340, gridSize=4):
         QtWidgets.QWidget.__init__(self, parent)
-
+        
+#        # boutons des actions à réaliser : left, right, up, down
+##        self.lay = QtWidgets.QHBoxLayout()
+##        self.setLayout(self.lay)
+#        
+#        self.button = QtWidgets.QPushButton("left", parent=self)
+#        self.button2 = QtWidgets.QPushButton("right", parent=self)
+#        self.button3 = QtWidgets.QPushButton("up", parent=self)
+#        self.button4 = QtWidgets.QPushButton("down", parent=self)
+#        
+##        self.lay.addWidget(self.button)
+##        self.lay.addWidget(self.button2)
+##        self.lay.addWidget(self.button3)
+##        self.lay.addWidget(self.button4)
+#        
+#        self.grid = QtWidgets.QGridLayout()
+#        self.grid.setSpacing(100)
+#
+#        self.grid.addWidget(self.button, 1, 0)
+#        self.grid.addWidget(self.button2, 2, 0)
+#        self.grid.addWidget(self.button3, 3, 0)
+#        self.grid.addWidget(self.button4, 4, 0)
+#        
+#        self.setLayout(self.grid)
+#        
+#        self.show()
+             
         self.gameRunning = False
         self.panelHeight = 80
         self.gridSize = gridSize
@@ -50,6 +76,9 @@ class MyWidget(QtWidgets.QWidget):
         self.hiScore = 0
         self.resize(QtCore.QSize(width,width+self.panelHeight))
         self.reset_game()
+        
+        
+
         
     def resizeEvent(self,e):
         width = min(e.size().width(),e.size().height()-self.panelHeight)

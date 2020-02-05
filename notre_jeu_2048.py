@@ -183,18 +183,12 @@ class TwentyFortyEight:
         return self.tiles[row][col]
 
 
-class Settings():
-
-       WIDTH = 20
-       HEIGHT = 20
-       NUM_BLOCKS_X = 4
-       NUM_BLOCKS_Y = 4
 
 class MyWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(MyWidget, self).__init__(parent)
         
-        # boutons des actions à définir : left, right, up, down
+        # boutons des actions à réaliser : left, right, up, down
         self.lay = QtWidgets.QHBoxLayout()
         self.setLayout(self.lay)
         
