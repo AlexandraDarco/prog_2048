@@ -98,14 +98,16 @@ class MyWidget(QtWidgets.QWidget):
         self.update()
         self.gameRunning = True
         
-    def addTile(self): #FINIE
+    def addTile(self): # ajouter un 2 ou 4 aléatoirement sur la grille la où place dispo 
+        #à chaque tour, 1/10 chance d'etre un 4
         if len(self.availableSpots)>0:
-            value = 2 if random.random()<0.9 else 4
+            value = 2 if random.random()<0.9 else 4 
             ind = self.availableSpots.pop(int(random.random()*len(self.availableSpots)))
             indx = ind%self.gridSize
             indy = ind//self.gridSize
             self.tiles[indx][indy] = Tile(value)
-            
+     
+    # méthodes pour les actions : up, down, left, right    
     def up(self):
         moved = False
         for gridX in range(0,self.gridSize):
@@ -186,6 +188,7 @@ class MyWidget(QtWidgets.QWidget):
         if moved:
             self.updateTiles()
         
+    # mettre à jour les cases    
     def updateTiles(self):
         self.availableSpots = []
         for i in range(0,self.gridSize):
@@ -195,10 +198,13 @@ class MyWidget(QtWidgets.QWidget):
         self.addTile()
         self.hiScore = max(self.score,self.hiScore)
         self.update()
+        # si plus de coup dispo -> game over
         if not self.movesAvailable():
             self.gameRunning = False
             QtWidgets.QMessageBox.information(self,'','Game Over')
-        
+            
+            
+    # quels sont les coups dispo ?     
     def movesAvailable(self):
         if not len(self.availableSpots)==0:
             return True
@@ -210,6 +216,7 @@ class MyWidget(QtWidgets.QWidget):
                     return True
         return False
     
+    # lien avec le clavier
     def keyPressEvent(self,e):
         if not self.gameRunning:
             return
@@ -224,8 +231,7 @@ class MyWidget(QtWidgets.QWidget):
         elif e.key() == QtCore.Qt.Key_Right:
             self.right()
             
-    
-    
+        
     def paintEvent(self,event):
         painter = QtGui.QPainter(self)
         painter.setPen(QtCore.Qt.NoPen)
