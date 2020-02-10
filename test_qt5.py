@@ -231,7 +231,28 @@ class MyWidget(QtWidgets.QWidget):
         elif e.key() == QtCore.Qt.Key_Right:
             self.right()
             
+    def buttons(self): 
+        self.lay = QtWidgets.QHBoxLayout()
+        self.setLayout(self.lay)
         
+        self.button = QtWidgets.QPushButton("left", parent=self)
+        self.button2 = QtWidgets.QPushButton("right", parent=self)
+        self.button3 = QtWidgets.QPushButton("up", parent=self)
+        self.button4 = QtWidgets.QPushButton("down", parent=self)
+        
+        self.lay.addWidget(self.button)
+        self.lay.addWidget(self.button2)
+        self.lay.addWidget(self.button3)
+        self.lay.addWidget(self.button4)
+        
+        self.button.clicked.connect(self.left())
+        self.button2.clicked.connect(self.right())
+        self.button3.clicked.connect(self.up())
+        self.button4.clicked.connect(self.down())
+        
+        self.show()
+
+    
     def paintEvent(self,event):
         painter = QtGui.QPainter(self)
         painter.setPen(QtCore.Qt.NoPen)
