@@ -6,9 +6,12 @@ Created on Mon Feb 10 12:11:48 2020
 """
 
 import sys
+import numpy as np
 from PyQt5 import QtCore, QtWidgets,QtGui
 import random
+import functools as fn
 
+DIRECTIONS = {"right":(0,1),"left":(0,-1),"up":(-1,0),"down":(1,0)}
 
 class Tile:
     def __init__(self,value):
@@ -37,86 +40,154 @@ class Jeu:
             indx = ind%self.gridSize
             indy = ind//self.gridSize
             self.tiles[indx][indy] = Tile(value)
-     
-    def up(self):
-        moved = False
-        for gridX in range(0,self.gridSize):
-            for gridY in range(1,self.gridSize):
-                if self.tiles[gridX][gridY] is not None:
-                    i = gridY
-                    while i-1>=0 and self.tiles[gridX][i-1] is  None:
-                        i -= 1
-                    if i-1>=0 and self.tiles[gridX][i-1].value==self.tiles[gridX][gridY].value:
-                        self.score += self.tiles[gridX][gridY].value*2
-                        self.tiles[gridX][i-1].value *= 2
-                        self.tiles[gridX][gridY] = None
-                        moved = True
-                    elif i<gridY:
-                        self.tiles[gridX][i] = self.tiles[gridX][gridY]
-                        self.tiles[gridX][gridY] = None
-                        moved = True
-        if moved:
-            self.updateTiles()
             
-    def down(self):
+    
+    def move_left(self,tiles):
         moved = False
-        for gridX in range(0,self.gridSize):
-            for gridY in range(self.gridSize-2,-1,-1):
-                if self.tiles[gridX][gridY] is not None:
-                    i = gridY
-                    while i+1<self.gridSize and self.tiles[gridX][i+1] is None:
-                        i += 1
-                    if i+1<self.gridSize and self.tiles[gridX][i+1].value==self.tiles[gridX][gridY].value:
-                        self.score += self.tiles[gridX][gridY].value*2
-                        self.tiles[gridX][i+1].value *= 2
-                        self.tiles[gridX][gridY] = None
-                        moved = True
-                    elif i>gridY:
-                        self.tiles[gridX][i] = self.tiles[gridX][gridY]
-                        self.tiles[gridX][gridY] = None
-                        moved = True
-        if moved:
-           self.updateTiles()
-           
-    def left(self):
-        moved = False
-        for gridX in range(1,self.gridSize):
-            for gridY in range(0,self.gridSize):
-                if self.tiles[gridX][gridY] is not None:
+        for gridX in range(1,len(tiles)):
+            for gridY in range(0,len(tiles)):
+                if tiles[gridX][gridY] is not None:
                     i = gridX
-                    while i-1>=0 and self.tiles[i-1][gridY] is None:
-                        i -= 1
-                    if i-1>=0 and self.tiles[i-1][gridY].value==self.tiles[gridX][gridY].value:
-                        self.score += self.tiles[gridX][gridY].value*2
-                        self.tiles[i-1][gridY].value *= 2
-                        self.tiles[gridX][gridY] = None
+                    while i-1>=0 and tiles[i-1][gridY] is None:
+                       i -= 1
+                    if i-1>=0 and tiles[i-1][gridY].value == tiles[gridX][gridY].value:
+                        self.score += tiles[gridX][gridY].value*2
+                        tiles[i-1][gridY].value *= 2
+                        tiles[gridX][gridY] = None
                         moved = True
                     elif i<gridX:
-                        self.tiles[i][gridY] = self.tiles[gridX][gridY]
-                        self.tiles[gridX][gridY] = None
+                        tiles[i][gridY] = tiles[gridX][gridY]
+                        tiles[gridX][gridY] = None
                         moved = True
-        if moved:
-            self.updateTiles()
             
-    def right(self):
-        moved = False
-        for gridX in range(self.gridSize-2,-1,-1):
-            for gridY in range(0,self.gridSize):
-                if self.tiles[gridX][gridY] is not None:
-                    i = gridX
-                    while i+1<self.gridSize and self.tiles[i+1][gridY] is None:
-                        i +=1
-                    if i+1<self.gridSize and self.tiles[i+1][gridY].value==self.tiles[gridX][gridY].value:
-                        self.score += self.tiles[gridX][gridY].value*2
-                        self.tiles[i+1][gridY].value *= 2
-                        self.tiles[gridX][gridY] = None
-                        moved = True
-                    elif i>gridX:
-                        self.tiles[i][gridY] = self.tiles[gridX][gridY]
-                        self.tiles[gridX][gridY] = None
-                        moved = True
+        return moved,tiles
+    
+    def rotate(self,tiles,d,direct):
+        # if direct = True, performs first rotation
+        # if direct = False, performs second rotation
+        if d[1] == 1:
+            tiles.reverse()
+        elif d[0] == -1:
+            tiles = np.array(tiles).T.tolist()
+        elif d[0] == 1:
+            if direct:
+                tiles = np.array(tiles).T.tolist()
+                tiles.reverse()
+            else:
+                tiles.reverse()
+                tiles = np.array(tiles).T.tolist()
+        return tiles                                  
+        
+    def move(self,direction):
+        tiles = self.tiles
+        direction = DIRECTIONS[direction]
+        
+        #rotates matrix
+        tiles = self.rotate(tiles,direction,True)       
+        #moves
+        moved,tiles_moved = self.move_left(tiles)
+        print(moved)
         if moved:
-            self.updateTiles()
+            print("moved")
+        #rotates matrix back
+            self.tiles = self.rotate(tiles_moved,direction,False)
+            self.updateTiles() 
+        else:
+            print("move not available")
+
+            
+    def up(self):
+        self.up = fn.partial(self.move,direction="up")
+    
+    def down(self):
+        self.down = fn.partial(self.move,direction="down")
+
+    def right(self):
+        self.right = fn.partial(self.move,direction="right")
+
+    def left(self):
+        self.left = fn.partial(self.move,direction="left")
+    
+     
+#    def up(self):
+#        moved = False
+#        for gridX in range(0,self.gridSize):
+#            for gridY in range(1,self.gridSize):
+#                if self.tiles[gridX][gridY] is not None:
+#                    i = gridY
+#                    while i-1>=0 and self.tiles[gridX][i-1] is  None:
+#                        i -= 1
+#                    if i-1>=0 and self.tiles[gridX][i-1].value==self.tiles[gridX][gridY].value:
+#                        self.score += self.tiles[gridX][gridY].value*2
+#                        self.tiles[gridX][i-1].value *= 2
+#                        self.tiles[gridX][gridY] = None
+#                        moved = True
+#                    elif i<gridY:
+#                        self.tiles[gridX][i] = self.tiles[gridX][gridY]
+#                        self.tiles[gridX][gridY] = None
+#                        moved = True
+#        if moved:
+#            self.updateTiles()
+#            
+#    def down(self):
+#        moved = False
+#        for gridX in range(0,self.gridSize):
+#            for gridY in range(self.gridSize-2,-1,-1):
+#                if self.tiles[gridX][gridY] is not None:
+#                    i = gridY
+#                    while i+1<self.gridSize and self.tiles[gridX][i+1] is None:
+#                        i += 1
+#                    if i+1<self.gridSize and self.tiles[gridX][i+1].value==self.tiles[gridX][gridY].value:
+#                        self.score += self.tiles[gridX][gridY].value*2
+#                        self.tiles[gridX][i+1].value *= 2
+#                        self.tiles[gridX][gridY] = None
+#                        moved = True
+#                    elif i>gridY:
+#                        self.tiles[gridX][i] = self.tiles[gridX][gridY]
+#                        self.tiles[gridX][gridY] = None
+#                        moved = True
+#        if moved:
+#           self.updateTiles()
+#           
+#    def left(self):
+#        moved = False
+#        for gridX in range(1,self.gridSize):
+#            for gridY in range(0,self.gridSize):
+#                if self.tiles[gridX][gridY] is not None:
+#                    i = gridX
+#                    while i-1>=0 and self.tiles[i-1][gridY] is None:
+#                        i -= 1
+#                    if i-1>=0 and self.tiles[i-1][gridY].value==self.tiles[gridX][gridY].value:
+#                        self.score += self.tiles[gridX][gridY].value*2
+#                        self.tiles[i-1][gridY].value *= 2
+#                        self.tiles[gridX][gridY] = None
+#                        moved = True
+#                    elif i<gridX:
+#                        self.tiles[i][gridY] = self.tiles[gridX][gridY]
+#                        self.tiles[gridX][gridY] = None
+#                        moved = True
+#        if moved:
+#            self.updateTiles()
+#            
+#    def right(self):
+#        moved = False
+#        for gridX in range(self.gridSize-2,-1,-1):
+#            for gridY in range(0,self.gridSize):
+#                if self.tiles[gridX][gridY] is not None:
+#                    i = gridX
+#                    while i+1<self.gridSize and self.tiles[i+1][gridY] is None:
+#                        i +=1
+#                    if i+1<self.gridSize and self.tiles[i+1][gridY].value==self.tiles[gridX][gridY].value:
+#                        self.score += self.tiles[gridX][gridY].value*2
+#                        self.tiles[i+1][gridY].value *= 2
+#                        self.tiles[gridX][gridY] = None
+#                        moved = True
+#                    elif i>gridX:
+#                        self.tiles[i][gridY] = self.tiles[gridX][gridY]
+#                        self.tiles[gridX][gridY] = None
+#                        moved = True
+#        if moved:
+#            self.updateTiles()
 
     def updateTiles(self):
         self.availableSpots = []
