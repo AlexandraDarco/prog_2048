@@ -9,6 +9,9 @@ import sys
 from PyQt5 import QtCore, QtWidgets,QtGui
 import random
 
+
+print("yo")
+
 class Tile:
     def __init__(self,value):
         self.value = value
@@ -243,8 +246,11 @@ class MyWidget(QtWidgets.QWidget):
             QtWidgets.QMessageBox.information(self,'','Game Over')
             
             
-    # quels sont les coups dispo ?     
+    #     
     def movesAvailable(self):
+        """
+        quels sont les coups dispo ? 
+        """
         if not len(self.availableSpots)==0:
             return True
         for i in range(0,self.gridSize):
@@ -322,11 +328,26 @@ class MyWidget(QtWidgets.QWidget):
                 if tile is not None:
                     painter.setPen(self.darkPen if tile.value<16 else self.lightPen)
                     painter.drawText(rect,str(tile.value),QtGui.QTextOption(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter))
-        
-        
-app = QtWidgets.QApplication([])
-app.setQuitOnLastWindowClosed(True)
-jeu = MyWidget(None,400,5)
-jeu.move(0,0)
-jeu.show()
-sys.exit(app.exec_()) 
+
+
+print('running')
+if __name__=='__main__':
+    APP = QtWidgets.QApplication.instance()
+    IS_STANDARD_CONSOLE = (APP is None)
+    print('running')
+    if IS_STANDARD_CONSOLE: # launched from standard console (not ipython console)
+        print('running in console')
+        APP = QtWidgets.QApplication(["test"])
+    M = MyWidget(None)
+    M.show()
+    if IS_STANDARD_CONSOLE:
+        APP.exec_()
+
+#        
+#if __name__=='__main__':
+#    app = QtWidgets.QApplication([])
+#    app.setQuitOnLastWindowClosed(True)
+#    jeu = MyWidget(None,400,5)
+#    jeu.move(0,0)
+#    jeu.show()
+#sys.exit(app.exec_()) 
