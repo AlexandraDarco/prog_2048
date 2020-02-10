@@ -10,8 +10,6 @@ from PyQt5 import QtCore, QtWidgets,QtGui
 import random
 
 
-print("yo")
-
 class Tile:
     def __init__(self,value):
         self.value = value
@@ -330,7 +328,8 @@ class MyWidget(QtWidgets.QWidget):
                     painter.drawText(rect,str(tile.value),QtGui.QTextOption(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter))
 
 
-print('running')
+
+
 if __name__=='__main__':
     APP = QtWidgets.QApplication.instance()
     IS_STANDARD_CONSOLE = (APP is None)
