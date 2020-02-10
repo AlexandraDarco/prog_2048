@@ -5,6 +5,7 @@ Created on Wed Feb  5 18:01:03 2020
 @author: cecil
 """
 
+import sys
 from PyQt5 import QtCore, QtWidgets,QtGui
 import random
 
@@ -20,7 +21,7 @@ class MyWidget(QtWidgets.QWidget):
 ##        self.lay = QtWidgets.QHBoxLayout()
 ##        self.setLayout(self.lay)
 #        
-#        self.button = QtWidgets.QPushButton("left", parent=self)
+
 #        self.button2 = QtWidgets.QPushButton("right", parent=self)
 #        self.button3 = QtWidgets.QPushButton("up", parent=self)
 #        self.button4 = QtWidgets.QPushButton("down", parent=self)
@@ -74,8 +75,46 @@ class MyWidget(QtWidgets.QWidget):
         self.scoreLabel = QtCore.QRectF(10,25,80,self.panelHeight-30)
         self.hiScoreLabel = QtCore.QRectF(100,25,80,self.panelHeight-30)
         self.hiScore = 0
+        self.lastPoint = None
         self.resize(QtCore.QSize(width,width+self.panelHeight))
         self.reset_game()
+        
+        #self.button_left = QtWidgets.QPushButton("left", parent=self)
+        #self.button_left.move(280,30)
+        #self.button_left.clicked.connect(self.left)
+        
+        #self.button_right = QtWidgets.QPushButton("RIGHT",parent=self)
+        #self.button_right.move(480,30)
+        #self.button_right.clicked.connect(self.right)
+        
+        #self.button_up = QtWidgets.QPushButton("UP",parent=self)
+        #self.button_up.move(380,20)
+        #self.button_up.clicked.connect(self.up)
+        
+        #self.button_down = QtWidgets.QPushButton("DOWN",parent=self)
+        #self.button_down.move(380,40)
+        #self.button_down.clicked.connect(self.down)
+        
+        self.button_arrow = QtWidgets.QToolButton(parent=self)
+        self.button_arrow.setArrowType(QtCore.Qt.DownArrow)
+        self.button_arrow.move(320,50)
+        self.button_arrow.clicked.connect(self.down)
+       
+        self.button_arrow_up = QtWidgets.QToolButton(parent=self)
+        self.button_arrow_up.setArrowType(QtCore.Qt.UpArrow)
+        self.button_arrow_up.move(320,10)
+        self.button_arrow_up.clicked.connect(self.up)
+        
+        self.button_arrow_left = QtWidgets.QToolButton(parent=self)
+        self.button_arrow_left.setArrowType(QtCore.Qt.LeftArrow)
+        self.button_arrow_left.move(290,30)
+        self.button_arrow_left.clicked.connect(self.left)
+        
+        self.button_arrow_right = QtWidgets.QToolButton(parent=self)
+        self.button_arrow_right.setArrowType(QtCore.Qt.RightArrow)
+        self.button_arrow_right.move(350,30)
+        self.button_arrow_right.clicked.connect(self.right)
+        
         
         
 
@@ -231,6 +270,21 @@ class MyWidget(QtWidgets.QWidget):
         elif e.key() == QtCore.Qt.Key_Right:
             self.right()
             
+    def mousePressEvent(self,e):
+        self.lastPoint = e.pos()
+        
+    def mouseReleaseEvent(self,e):
+        if self.resetRect.contains(self.lastPoint.x(),self.lastPoint.y()) and self.resetRect.contains(e.pos().x(),e.pos().y()):
+            if QtWidgets.QMessageBox.question(self,'','Are you sure you want to start a new game?')==QtWidgets.QMessageBox.Yes:
+                self.reset_game()
+        elif self.gameRunning and self.lastPoint is not None:
+            dx = e.pos().x()-self.lastPoint.x()
+            dy = e.pos().y()-self.lastPoint.y()
+            if abs(dx)>abs(dy) and abs(dx)>10:
+                 if dx>0:
+                     self.right()
+                 else:
+                     self.left()
         
     def paintEvent(self,event):
         painter = QtGui.QPainter(self)
@@ -272,7 +326,7 @@ class MyWidget(QtWidgets.QWidget):
         
 app = QtWidgets.QApplication([])
 app.setQuitOnLastWindowClosed(True)
-jeu = MyWidget(None,340,4)
+jeu = MyWidget(None,400,5)
 jeu.move(0,0)
 jeu.show()
-app.exec_()
+sys.exit(app.exec_()) 
