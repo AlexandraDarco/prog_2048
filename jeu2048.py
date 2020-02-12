@@ -298,22 +298,6 @@ class Jeu:
 #        if moved:
 #            self.updateTiles()
 
-    def updateTiles(self):
-        """ update the value of the boxes following the move made:
-         add the identical boxes, add a 2 or 4""" 
-        self.availableSpots = []
-        for i in range(0,self.gridSize):
-            for j in range(0,self.gridSize):
-                if self.tiles[i][j] is None:
-                    self.availableSpots.append(i+j*self.gridSize)
-        self.addTile()
-        self.hiScore = max(self.score,self.hiScore)
-        self.update()
-        # si plus de coup dispo -> game over
-        if not self.movesAvailable():
-            self.gameRunning = False  
-            QtWidgets.QMessageBox.information(self,'','Game Over')
-            
     
     def movesAvailable(self):
         """ Look for available shots to find out if game over or not """
@@ -327,6 +311,23 @@ class Jeu:
                     return True
         return False
     
+    def updateTiles(self):
+        """ update the value of the boxes following the move made:
+         and add a 2 or 4""" 
+        self.availableSpots = []
+        for i in range(0,self.gridSize):
+            for j in range(0,self.gridSize):
+                if self.tiles[i][j] is None:
+                    self.availableSpots.append(i+j*self.gridSize)
+        self.addTile()
+        self.hiScore = max(self.score,self.hiScore)
+        self.update()
+        # si plus de coup dispo -> game over
+        if not self.movesAvailable():
+            self.gameRunning = False  
+            QtWidgets.QMessageBox.information(self,'','Game Over')
+            
+
     
        
     
