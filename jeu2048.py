@@ -12,13 +12,13 @@ import functools as fn
 DIRECTIONS = {"right":(0,1),"left":(0,-1),"up":(-1,0),"down":(1,0)}
 
 class Tile:
+    """ get value of the tile """
     def __init__(self,value):
-        """ recupere la valeur de la case """
         self.value = value
     
     
 class Widget2048(QtWidgets.QWidget):
-    """ class qui définit la grille, les couleurs """ 
+    """ defines grid, colors, buttons on the widget """ 
     def __init__(self, parent, width=340, gridSize=4):
         QtWidgets.QWidget.__init__(self, parent)
         self.panelHeight = 80
@@ -113,7 +113,7 @@ class Jeu:
         self.gameRunning = True
         
     def addTile(self):
-        """ ajouter un 2 aléatoirement dans la grille à chaque coup, 10% de chance qu'on ajoute un 4 """
+        """ add randomly a 2 in the grid at each iteration, 10% chances it's a 4 """
         if len(self.availableSpots)>0:
             value = 2 if random.random()<0.9 else 4 
             ind = self.availableSpots.pop(int(random.random()*len(self.availableSpots)))
@@ -122,36 +122,32 @@ class Jeu:
             self.tiles[indx][indy] = Tile(value)
             
     def rotateMatrix(self,mat):
-        # rotates a N x N matrix by 90 degrees in 
-        # anti-clockwise direction
+        """rotates a N x N matrix by 90 degrees in 
+        anti-clockwise direction"""
         N = len(mat)
         for x in range(0, int(N/2)): 
-          
         # Consider elements in group    
         # of 4 in current square 
             for y in range(x, N-x-1): 
-              
                 # store current cell in temp variable 
                 temp = mat[x][y] 
-  
                 # move values from right to top 
                 mat[x][y] = mat[y][N-1-x] 
-  
                 # move values from bottom to right 
                 mat[y][N-1-x] = mat[N-1-x][N-1-y] 
-  
                 # move values from left to bottom 
                 mat[N-1-x][N-1-y] = mat[N-1-y][x] 
-  
                 # assign temp to left 
                 mat[N-1-y][x] = temp 
 
                 
     def rotateMatrixMultiple(self,mat,times):
+        """ numerous rotations """
         for i in range(0,times):
             self.rotateMatrix(mat)
     
     def move_left(self,tiles):
+        """ moves all the tiles to the left if it is possible """
         moved = False
         for gridX in range(1,len(tiles)):
             for gridY in range(0,len(tiles)):
@@ -172,6 +168,7 @@ class Jeu:
         return moved,tiles
     
     def rotate(self,mat,d):
+        """ rotation compared to left movement to use only one fonction move """
         times = 0
         if d[1] == 1: #right
             times = 2
@@ -183,6 +180,7 @@ class Jeu:
         return mat
     
     def rotate_back(self,tiles,d):
+        """ rotation back after the movement """
         times = 0
         if d[1] == 1: #right
             times = 2
@@ -194,10 +192,9 @@ class Jeu:
         return tiles                                
         
     def move(self,direction):
+        """ rotate, move, rotate back ; depends on the direction """
         tiles = np.array(self.tiles)
-        print(type(tiles))
         direction = DIRECTIONS[direction]
-        
         #rotates matrix
         tiles = self.rotate(tiles,direction) 
         #moves
@@ -302,8 +299,8 @@ class Jeu:
 #            self.updateTiles()
 
     def updateTiles(self):
-        """ mettre à jour la valeur des cases suivant le coup réalisé :
-        sommer les cases identiques, ajouter un 2 ou 4""" 
+        """ update the value of the boxes following the move made:
+         add the identical boxes, add a 2 or 4""" 
         self.availableSpots = []
         for i in range(0,self.gridSize):
             for j in range(0,self.gridSize):
@@ -319,7 +316,7 @@ class Jeu:
             
     
     def movesAvailable(self):
-        """ Cherche les coups dispo pour savoir si game over ou pas """
+        """ Look for available shots to find out if game over or not """
         if not len(self.availableSpots)==0:
             return True
         for i in range(0,self.gridSize):
@@ -331,12 +328,10 @@ class Jeu:
         return False
     
     
-
-
-        
+       
     
 class JeuWidget(Jeu,Widget2048):
-    """ lien entre class jeu et class Widget, et effet du clavier et/ou des boutons"""
+    """ link between class jeu and class Widget, and effect of the keyboard and/or buttons"""
     def __init__(self,parent):
         Widget2048.__init__(self, parent)
         Jeu.__init__(self,gridSize = 4)
