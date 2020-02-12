@@ -4,7 +4,6 @@ Created on Mon Feb 10 12:11:48 2020
 @author: cecil
 """
 
-import sys
 import numpy as np
 from PyQt5 import QtCore, QtWidgets,QtGui
 import random
@@ -16,7 +15,87 @@ class Tile:
     def __init__(self,value):
         """ recupere la valeur de la case """
         self.value = value
+    
+    
+class Widget2048(QtWidgets.QWidget):
+    """ class qui définit la grille, les couleurs """ 
+    def __init__(self, parent, width=340, gridSize=4):
+        QtWidgets.QWidget.__init__(self, parent)
+        self.panelHeight = 80
+        self.gridSize = gridSize
         
+        self.backgroundBrush = QtGui.QBrush(QtGui.QColor(0xbbada0))
+        self.tileMargin = 16
+        self.gridOffsetX = self.tileMargin
+        self.gridOffsetY = self.panelHeight + self.tileMargin
+        self.brushes={
+			0:QtGui.QBrush(QtGui.QColor(0xcdc1b4)),
+			1:QtGui.QBrush(QtGui.QColor(0x999999)),
+			2:QtGui.QBrush(QtGui.QColor(0xeee4da)),
+			4:QtGui.QBrush(QtGui.QColor(0xede0c8)),
+			8:QtGui.QBrush(QtGui.QColor(0xf2b179)),
+			16:QtGui.QBrush(QtGui.QColor(0xf59563)),
+			32:QtGui.QBrush(QtGui.QColor(0xf67c5f)),
+			64:QtGui.QBrush(QtGui.QColor(0xf65e3b)),
+			128:QtGui.QBrush(QtGui.QColor(0xedcf72)),
+			256:QtGui.QBrush(QtGui.QColor(0xedcc61)),
+			512:QtGui.QBrush(QtGui.QColor(0xedc850)),
+			1024:QtGui.QBrush(QtGui.QColor(0xedc53f)),
+			2048:QtGui.QBrush(QtGui.QColor(0xedc22e)),
+		}
+        self.lightPen = QtGui.QPen(QtGui.QColor(0xf9f6f2))
+        self.darkPen = QtGui.QPen(QtGui.QColor(0x776e65))
+        self.scoreRect = QtCore.QRectF(10,10,80,self.panelHeight-20)
+        self.hiScoreRect = QtCore.QRectF(100,10,80,self.panelHeight-20)
+        self.resetRect = QtCore.QRectF(190,10,80,self.panelHeight-20)
+        self.scoreLabel = QtCore.QRectF(10,25,80,self.panelHeight-30)
+        self.hiScoreLabel = QtCore.QRectF(100,25,80,self.panelHeight-30)
+        self.lastPoint = None
+        self.resize(QtCore.QSize(width,width+self.panelHeight))
+      
+    def resizeEvent(self,e):
+        width = min(e.size().width(),e.size().height()-self.panelHeight)
+        self.tileSize = (width-self.tileMargin*(self.gridSize+1))/self.gridSize
+        self.font = QtGui.QFont('Arial',self.tileSize/4)
+        
+        
+    def paintEvent(self,event):
+        painter = QtGui.QPainter(self)
+        painter.setPen(QtCore.Qt.NoPen)
+        painter.setBrush(self.backgroundBrush)
+        painter.drawRect(self.rect())
+        painter.setBrush(self.brushes[1])
+        painter.drawRect(self.scoreRect)
+        painter.drawRect(self.hiScoreRect)
+        painter.drawRect(self.resetRect)
+        painter.setFont(QtGui.QFont('Arial',9))
+        painter.setPen(self.darkPen)
+        painter.drawText(QtCore.QRectF(10,15,80,20),'SCORE',QtGui.QTextOption(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter))
+        painter.drawText(QtCore.QRectF(100,15,80,20),'HIGHSCORE',QtGui.QTextOption(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter))
+        painter.setFont(QtGui.QFont('Arial',15))
+        painter.setPen(self.lightPen)
+        painter.drawText(self.resetRect,'RESET',QtGui.QTextOption(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter))
+        painter.setFont(QtGui.QFont('Arial',15))
+        painter.setPen(self.lightPen)
+        painter.drawText(self.scoreLabel,str(self.score),QtGui.QTextOption(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter))
+        painter.drawText(self.hiScoreLabel,str(self.hiScore),QtGui.QTextOption(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter))
+        painter.setFont(self.font)
+        for gridX in range(0,self.gridSize):
+            for gridY in range(0,self.gridSize):
+                tile = self.tiles[gridX][gridY]
+                if tile is None:
+                    painter.setBrush(self.brushes[0])
+                else:
+                    painter.setBrush(self.brushes[tile.value])
+                rect = QtCore.QRectF(self.gridOffsetX+gridX*(self.tileSize+self.tileMargin),
+                                       self.gridOffsetY+gridY*(self.tileSize+self.tileMargin),
+                                       self.tileSize,self.tileSize)
+                painter.setPen(QtCore.Qt.NoPen)
+                painter.drawRect(rect)
+                if tile is not None:
+                    painter.setPen(self.darkPen if tile.value<16 else self.lightPen)
+                    painter.drawText(rect,str(tile.value),QtGui.QTextOption(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter))
+
 class Jeu:
     def __init__(self, gridSize = 4):
         self.gameRunning = False
@@ -71,8 +150,6 @@ class Jeu:
     def rotateMatrixMultiple(self,mat,times):
         for i in range(0,times):
             self.rotateMatrix(mat)
-        print("type dans rotateMatrixMultiple")
-        print(type(mat))
     
     def move_left(self,tiles):
         moved = False
@@ -102,8 +179,6 @@ class Jeu:
             times = 3
         elif d[0] == 1: #down
             times = 1
-        print("type avant rotateMatrixMultiple")
-        print(type(mat))
         self.rotateMatrixMultiple(mat,times)
         return mat
     
@@ -119,28 +194,19 @@ class Jeu:
         return tiles                                
         
     def move(self,direction):
-        print("cc")
         tiles = np.array(self.tiles)
         print(type(tiles))
         direction = DIRECTIONS[direction]
         
         #rotates matrix
         tiles = self.rotate(tiles,direction) 
-        print("tiles")
-        print(type(tiles))
-        print(type(tiles.tolist()))
         #moves
         moved,tiles_moved = self.move_left(tiles.tolist())
-        print(moved)
         if moved:
-            print("moved")
         #rotates matrix back
             self.tiles = self.rotate_back(np.array(tiles_moved),direction)
             self.tiles.tolist()
             self.updateTiles() 
-        else:
-            print("move not available")
-
             
     def up(self):
         self.up = fn.partial(self.move,direction="up")
@@ -265,84 +331,6 @@ class Jeu:
         return False
     
     
-class Widget2048(QtWidgets.QWidget):
-    """ class qui définit la grille, les couleurs """ 
-    def __init__(self, parent, width=340, gridSize=4):
-        QtWidgets.QWidget.__init__(self, parent)
-        self.panelHeight = 80
-        self.gridSize = gridSize
-        
-        self.backgroundBrush = QtGui.QBrush(QtGui.QColor(0xbbada0))
-        self.tileMargin = 16
-        self.gridOffsetX = self.tileMargin
-        self.gridOffsetY = self.panelHeight + self.tileMargin
-        self.brushes={
-			0:QtGui.QBrush(QtGui.QColor(0xcdc1b4)),
-			1:QtGui.QBrush(QtGui.QColor(0x999999)),
-			2:QtGui.QBrush(QtGui.QColor(0xeee4da)),
-			4:QtGui.QBrush(QtGui.QColor(0xede0c8)),
-			8:QtGui.QBrush(QtGui.QColor(0xf2b179)),
-			16:QtGui.QBrush(QtGui.QColor(0xf59563)),
-			32:QtGui.QBrush(QtGui.QColor(0xf67c5f)),
-			64:QtGui.QBrush(QtGui.QColor(0xf65e3b)),
-			128:QtGui.QBrush(QtGui.QColor(0xedcf72)),
-			256:QtGui.QBrush(QtGui.QColor(0xedcc61)),
-			512:QtGui.QBrush(QtGui.QColor(0xedc850)),
-			1024:QtGui.QBrush(QtGui.QColor(0xedc53f)),
-			2048:QtGui.QBrush(QtGui.QColor(0xedc22e)),
-		}
-        self.lightPen = QtGui.QPen(QtGui.QColor(0xf9f6f2))
-        self.darkPen = QtGui.QPen(QtGui.QColor(0x776e65))
-        self.scoreRect = QtCore.QRectF(10,10,80,self.panelHeight-20)
-        self.hiScoreRect = QtCore.QRectF(100,10,80,self.panelHeight-20)
-        self.resetRect = QtCore.QRectF(190,10,80,self.panelHeight-20)
-        self.scoreLabel = QtCore.QRectF(10,25,80,self.panelHeight-30)
-        self.hiScoreLabel = QtCore.QRectF(100,25,80,self.panelHeight-30)
-        self.lastPoint = None
-        self.resize(QtCore.QSize(width,width+self.panelHeight))
-      
-    def resizeEvent(self,e):
-        width = min(e.size().width(),e.size().height()-self.panelHeight)
-        self.tileSize = (width-self.tileMargin*(self.gridSize+1))/self.gridSize
-        self.font = QtGui.QFont('Arial',self.tileSize/4)
-        
-        
-    def paintEvent(self,event):
-        painter = QtGui.QPainter(self)
-        painter.setPen(QtCore.Qt.NoPen)
-        painter.setBrush(self.backgroundBrush)
-        painter.drawRect(self.rect())
-        painter.setBrush(self.brushes[1])
-        painter.drawRect(self.scoreRect)
-        painter.drawRect(self.hiScoreRect)
-        painter.drawRect(self.resetRect)
-        painter.setFont(QtGui.QFont('Arial',9))
-        painter.setPen(self.darkPen)
-        painter.drawText(QtCore.QRectF(10,15,80,20),'SCORE',QtGui.QTextOption(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter))
-        painter.drawText(QtCore.QRectF(100,15,80,20),'HIGHSCORE',QtGui.QTextOption(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter))
-        painter.setFont(QtGui.QFont('Arial',15))
-        painter.setPen(self.lightPen)
-        painter.drawText(self.resetRect,'RESET',QtGui.QTextOption(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter))
-        painter.setFont(QtGui.QFont('Arial',15))
-        painter.setPen(self.lightPen)
-        painter.drawText(self.scoreLabel,str(self.score),QtGui.QTextOption(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter))
-        painter.drawText(self.hiScoreLabel,str(self.hiScore),QtGui.QTextOption(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter))
-        painter.setFont(self.font)
-        for gridX in range(0,self.gridSize):
-            for gridY in range(0,self.gridSize):
-                tile = self.tiles[gridX][gridY]
-                if tile is None:
-                    painter.setBrush(self.brushes[0])
-                else:
-                    painter.setBrush(self.brushes[tile.value])
-                rect = QtCore.QRectF(self.gridOffsetX+gridX*(self.tileSize+self.tileMargin),
-                                       self.gridOffsetY+gridY*(self.tileSize+self.tileMargin),
-                                       self.tileSize,self.tileSize)
-                painter.setPen(QtCore.Qt.NoPen)
-                painter.drawRect(rect)
-                if tile is not None:
-                    painter.setPen(self.darkPen if tile.value<16 else self.lightPen)
-                    painter.drawText(rect,str(tile.value),QtGui.QTextOption(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter))
 
 
         
