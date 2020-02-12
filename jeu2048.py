@@ -42,49 +42,6 @@ class Jeu:
             indy = ind//self.gridSize
             self.tiles[indx][indy] = Tile(value)
             
-    
-    def move_left(self,tiles):
-        moved = False
-        for gridX in range(1,len(tiles)):
-            for gridY in range(0,len(tiles)):
-                if tiles[gridX][gridY] is not None:
-                    i = gridX
-                    while i-1>=0 and tiles[i-1][gridY] is None:
-                       i -= 1
-                    if i-1>=0 and tiles[i-1][gridY].value == tiles[gridX][gridY].value:
-                        self.score += tiles[gridX][gridY].value*2
-                        tiles[i-1][gridY].value *= 2
-                        tiles[gridX][gridY] = None
-                        moved = True
-                    elif i<gridX:
-                        tiles[i][gridY] = tiles[gridX][gridY]
-                        tiles[gridX][gridY] = None
-                        moved = True
-            
-        return moved,tiles
-    
-    def rotate(self,tiles,d):
-        times = 0
-        if d[1] == 1: #right
-            times = 2
-        elif d[0] == -1:
-            times = 1
-        elif d[0] == 1:
-            times = 3
-        tiles = self.rotateMatrixMultiple(tiles,times)
-        return tiles
-    
-    def rotate_back(self,tiles,d):
-        times = 0
-        if d[1] == 1:
-            times = 2
-        elif d[0] == -1:
-            times = 3
-        elif d[0] == 1:
-            times = 1
-        tiles = self.rotateMatrixMultiple(tiles,times)
-        return tiles
-
     def rotateMatrix(self,mat):
         # rotates a N x N matrix by 90 degrees in 
         # anti-clockwise direction
@@ -109,26 +66,77 @@ class Jeu:
   
                 # assign temp to left 
                 mat[N-1-y][x] = temp 
+
                 
     def rotateMatrixMultiple(self,mat,times):
         for i in range(0,times):
             self.rotateMatrix(mat)
-                                  
+        print("type dans rotateMatrixMultiple")
+        print(type(mat))
+    
+    def move_left(self,tiles):
+        moved = False
+        for gridX in range(1,len(tiles)):
+            for gridY in range(0,len(tiles)):
+                if tiles[gridX][gridY] is not None:
+                    i = gridX
+                    while i-1>=0 and tiles[i-1][gridY] is None:
+                       i -= 1
+                    if i-1>=0 and tiles[i-1][gridY].value == tiles[gridX][gridY].value:
+                        self.score += tiles[gridX][gridY].value*2
+                        tiles[i-1][gridY].value *= 2
+                        tiles[gridX][gridY] = None
+                        moved = True
+                    elif i<gridX:
+                        tiles[i][gridY] = tiles[gridX][gridY]
+                        tiles[gridX][gridY] = None
+                        moved = True
+            
+        return moved,tiles
+    
+    def rotate(self,mat,d):
+        times = 0
+        if d[1] == 1: #right
+            times = 2
+        elif d[0] == -1: #up
+            times = 3
+        elif d[0] == 1: #down
+            times = 1
+        print("type avant rotateMatrixMultiple")
+        print(type(mat))
+        self.rotateMatrixMultiple(mat,times)
+        return mat
+    
+    def rotate_back(self,tiles,d):
+        times = 0
+        if d[1] == 1: #right
+            times = 2
+        elif d[0] == -1: #up
+            times = 1
+        elif d[0] == 1: #down
+            times = 3
+        self.rotateMatrixMultiple(tiles,times)
+        return tiles                                
         
     def move(self,direction):
         print("cc")
-        tiles = self.tiles
+        tiles = np.array(self.tiles)
+        print(type(tiles))
         direction = DIRECTIONS[direction]
         
         #rotates matrix
-        tiles = self.rotate(tiles,direction)       
+        tiles = self.rotate(tiles,direction) 
+        print("tiles")
+        print(type(tiles))
+        print(type(tiles.tolist()))
         #moves
-        moved,tiles_moved = self.move_left(tiles)
+        moved,tiles_moved = self.move_left(tiles.tolist())
         print(moved)
         if moved:
             print("moved")
         #rotates matrix back
-            self.tiles = self.rotate_back(tiles_moved,direction)
+            self.tiles = self.rotate_back(np.array(tiles_moved),direction)
+            self.tiles.tolist()
             self.updateTiles() 
         else:
             print("move not available")
