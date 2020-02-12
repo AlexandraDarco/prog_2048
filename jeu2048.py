@@ -193,7 +193,7 @@ class Jeu:
 
     def updateTiles(self):
         """ mettre à jour la valeur des cases suivant le coup réalisé :
-        sommer les identiques, ajouter un 2 ou 4""" 
+        sommer les cases identiques, ajouter un 2 ou 4""" 
         self.availableSpots = []
         for i in range(0,self.gridSize):
             for j in range(0,self.gridSize):
@@ -209,7 +209,7 @@ class Jeu:
             
     
     def movesAvailable(self):
-        """ Cherche les coups dispo """
+        """ Cherche les coups dispo pour savoir si game over ou pas """
         if not len(self.availableSpots)==0:
             return True
         for i in range(0,self.gridSize):
