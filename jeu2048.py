@@ -63,35 +63,72 @@ class Jeu:
             
         return moved,tiles
     
-    def rotate(self,tiles,d,direct):
-        # if direct = True, performs first rotation
-        # if direct = False, performs second rotation
-        if d[1] == 1:
-            tiles.reverse()
+    def rotate(self,tiles,d):
+        times = 0
+        if d[1] == 1: #right
+            times = 2
         elif d[0] == -1:
-            tiles = np.array(tiles).T.tolist()
+            times = 1
         elif d[0] == 1:
-            if direct:
-                tiles = np.array(tiles).T.tolist()
-                tiles.reverse()
-            else:
-                tiles.reverse()
-                tiles = np.array(tiles).T.tolist()
-        return tiles                                  
+            times = 3
+        tiles = self.rotateMatrixMultiple(tiles,times)
+        return tiles
+    
+    def rotate_back(self,tiles,d):
+        times = 0
+        if d[1] == 1:
+            times = 2
+        elif d[0] == -1:
+            times = 3
+        elif d[0] == 1:
+            times = 1
+        tiles = self.rotateMatrixMultiple(tiles,times)
+        return tiles
+
+    def rotateMatrix(self,mat):
+        # rotates a N x N matrix by 90 degrees in 
+        # anti-clockwise direction
+        N = len(mat)
+        for x in range(0, int(N/2)): 
+          
+        # Consider elements in group    
+        # of 4 in current square 
+            for y in range(x, N-x-1): 
+              
+                # store current cell in temp variable 
+                temp = mat[x][y] 
+  
+                # move values from right to top 
+                mat[x][y] = mat[y][N-1-x] 
+  
+                # move values from bottom to right 
+                mat[y][N-1-x] = mat[N-1-x][N-1-y] 
+  
+                # move values from left to bottom 
+                mat[N-1-x][N-1-y] = mat[N-1-y][x] 
+  
+                # assign temp to left 
+                mat[N-1-y][x] = temp 
+                
+    def rotateMatrixMultiple(self,mat,times):
+        for i in range(0,times):
+            self.rotateMatrix(mat)
+                                  
         
     def move(self,direction):
+        print("cc")
         tiles = self.tiles
         direction = DIRECTIONS[direction]
         
         #rotates matrix
-        tiles = self.rotate(tiles,direction,True)       
+        tiles = self.rotate(tiles,direction)       
         #moves
         moved,tiles_moved = self.move_left(tiles)
         print(moved)
         if moved:
             print("moved")
         #rotates matrix back
-            self.tiles = self.rotate(tiles_moved,direction,False)
+            self.tiles = self.rotate_back(tiles_moved,direction)
             self.updateTiles() 
         else:
             print("move not available")
