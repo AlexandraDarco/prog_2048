@@ -15,6 +15,7 @@ DIRECTIONS = {"right":(0,1),"left":(0,-1),"up":(-1,0),"down":(1,0)}
 
 class Tile:
     def __init__(self,value):
+        """ recupere la valeur de la case """
         self.value = value
         
 class Jeu:
@@ -34,6 +35,7 @@ class Jeu:
         self.gameRunning = True
         
     def addTile(self):
+        """ ajouter un 2 aléatoirement dans la grille à chaque coup, 10% de chance qu'on ajoute un 4 """
         if len(self.availableSpots)>0:
             value = 2 if random.random()<0.9 else 4 
             ind = self.availableSpots.pop(int(random.random()*len(self.availableSpots)))
@@ -190,6 +192,8 @@ class Jeu:
 #            self.updateTiles()
 
     def updateTiles(self):
+        """ mettre à jour la valeur des cases suivant le coup réalisé :
+        sommer les identiques, ajouter un 2 ou 4""" 
         self.availableSpots = []
         for i in range(0,self.gridSize):
             for j in range(0,self.gridSize):
@@ -205,9 +209,7 @@ class Jeu:
             
     
     def movesAvailable(self):
-        """
-        quels sont les coups dispo ? 
-        """
+        """ Cherche les coups dispo """
         if not len(self.availableSpots)==0:
             return True
         for i in range(0,self.gridSize):
@@ -220,6 +222,7 @@ class Jeu:
     
     
 class Widget2048(QtWidgets.QWidget):
+    """ class qui définit la grille, les couleurs """ 
     def __init__(self, parent, width=340, gridSize=4):
         QtWidgets.QWidget.__init__(self, parent)
         self.panelHeight = 80
@@ -301,6 +304,7 @@ class Widget2048(QtWidgets.QWidget):
         
     
 class JeuWidget(Jeu,Widget2048):
+    """ lien entre class jeu et class Widget, et effet du clavier et/ou des boutons"""
     def __init__(self,parent):
         Widget2048.__init__(self, parent)
         Jeu.__init__(self,gridSize = 4)
