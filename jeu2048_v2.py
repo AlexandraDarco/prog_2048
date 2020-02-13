@@ -112,8 +112,6 @@ class Jeu:
         if len(self.availableSpots)>0:
             value = 2 if random.random()<0.9 else 4 
             ind = self.availableSpots.pop(int(random.random()*len(self.availableSpots)))
-            print(self.tiles)
-            print(ind)
             indx = ind%self.gridSize
             indy = ind//self.gridSize
             self.tiles[indx][indy] = value
