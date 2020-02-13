@@ -52,6 +52,9 @@ class Widget2048(QtWidgets.QWidget):
         self.hiScoreLabel = QtCore.QRectF(100,25,80,self.panelHeight-30)
         self.lastPoint = None
         self.resize(QtCore.QSize(width,width+self.panelHeight))
+        
+        
+        
       
     def resizeEvent(self,e):
         width = min(e.size().width(),e.size().height()-self.panelHeight)
@@ -336,7 +339,7 @@ class JeuWidget(Jeu,Widget2048):
     def __init__(self,parent):
         Widget2048.__init__(self, parent)
         Jeu.__init__(self,gridSize = 4)
-                     
+                   
                 
     def keyPressEvent(self,e):
         if not self.gameRunning:
@@ -367,6 +370,7 @@ class JeuWidget(Jeu,Widget2048):
                      self.right()
                  else:
                      self.left()
+
     
 
 if __name__=='__main__':
