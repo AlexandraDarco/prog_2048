@@ -124,9 +124,8 @@ class AI_solver(Jeu):
         """
         Given a board and a first move, get a score by playing N_simulation random game
         """
-        tiles_backup = tiles.copy()
         stiles = tiles.copy()
-        stiles, moved, score = move_test(tiles, first_dir)
+        stiles, moved, score = move_test(stiles, first_dir)
         if not moved:
             return -1
         total_score = 0
