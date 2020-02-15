@@ -90,6 +90,10 @@ class Widget2048(QtWidgets.QWidget):
                 if tile != 0:
                     painter.setPen(self.darkPen if tile<16 else self.lightPen)
                     painter.drawText(rect,str(tile),QtGui.QTextOption(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter))
+        painter.end()
+        
+    def trigger_refresh(self):
+        self.update()
 
 class Jeu:
     def __init__(self, gridSize = 4):
@@ -102,31 +106,45 @@ class Jeu:
         self.tiles = np.zeros((self.gridSize,self.gridSize))
         self.availableSpots = list(range(0,self.gridSize**2))
         self.score = 0
-        self.addTile()
-        self.addTile()
-        #self.update()
+        self.add_tile(self.tiles)
+        self.add_tile(self.tiles)
         self.gameRunning = True
         
-    def addTile(self):
+    def add_tile(self,tiles):
         """ add randomly a 2 in the grid at each iteration, 10% chances it's a 4 """
-        if len(self.availableSpots)>0:
+        zeros = np.argwhere(tiles == 0)
+        if zeros.any():
             value = 2 if random.random()<0.9 else 4 
-            ind = self.availableSpots.pop(int(random.random()*len(self.availableSpots)))
-            indx = ind%self.gridSize
-            indy = ind//self.gridSize
-            self.tiles[indx][indy] = value
-            
-    def movesAvailable(self):
+            ind = zeros[int(random.random()*len(zeros))]
+            indx = ind[0]
+            indy = ind[1]
+            tiles[indx][indy] = value
+        return tiles
+    
+    def game_state(self,tiles):      
         """ Look for available shots to find out if game over or not """
-        if not len(self.availableSpots)==0:
+        zeros = np.argwhere(tiles == 0)
+        if zeros.any():
             return True
-        for i in range(0,self.gridSize):
-            for j in range(0,self.gridSize):
-                if i<self.gridSize-1 and self.tiles[i][j] == self.tiles[i+1][j]:
+        for i in range(0,len(tiles)):
+            for j in range(0,len(tiles)):
+                if i<len(tiles)-1 and tiles[i][j] == tiles[i+1][j]:
                     return True
-                if j<self.gridSize-1 and self.tiles[i][j] == self.tiles[i][j+1]:
+                if j<len(tiles)-1 and tiles[i][j] == tiles[i][j+1]:
                     return True
         return False
+            
+#    def movesAvailable(self):
+#        """ Look for available shots to find out if game over or not """
+#        if not len(self.availableSpots)==0:
+#            return True
+#        for i in range(0,self.gridSize):
+#            for j in range(0,self.gridSize):
+#                if i<self.gridSize-1 and self.tiles[i][j] == self.tiles[i+1][j]:
+#                    return True
+#                if j<self.gridSize-1 and self.tiles[i][j] == self.tiles[i][j+1]:
+#                    return True
+#        return False
     
     def updateTiles(self):
         """ update the value of the boxes following the move made:
@@ -136,11 +154,11 @@ class Jeu:
             for j in range(0,self.gridSize):
                 if self.tiles[i][j] == 0:
                     self.availableSpots.append(i+j*self.gridSize)
-        self.addTile()
+        self.add_tile(self.tiles)
         self.hiScore = max(self.score,self.hiScore)
         self.update()
         # si plus de coup dispo -> game over
-        if not self.movesAvailable():
+        if not self.game_state(self.tiles):
             self.gameRunning = False  
             QtWidgets.QMessageBox.information(self,'','Game Over')
             
