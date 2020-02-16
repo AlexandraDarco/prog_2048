@@ -97,6 +97,10 @@ class AI_solver(JeuWidget):
         while self.game_state(self.tiles):
 #        while N<10:
             move = self.get_best_move(self.tiles,method)
+
+#        while self.game_state(self.tiles):
+        while N<100:
+            move = self.get_best_move(self.tiles)
             self.move_tiles(move)
             self.update()
             QtWidgets.QApplication.processEvents()
