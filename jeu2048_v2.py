@@ -3,7 +3,7 @@
 Created on Mon Feb 10 12:11:48 2020
 @author: cecil
 """
-
+import time
 import numpy as np
 from PyQt5 import QtCore, QtWidgets,QtGui
 import random
@@ -159,7 +159,9 @@ class Jeu:
         self.update()
         # si plus de coup dispo -> game over
         if not self.game_state(self.tiles):
-            self.gameRunning = False  
+            self.add_tile(self.tiles)
+            self.gameRunning = False
+            QtWidgets.QApplication.processEvents()
             QtWidgets.QMessageBox.information(self,'','Game Over')
             
     def rotateMatrix(self,mat):
