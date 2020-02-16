@@ -185,7 +185,7 @@ class AI_solver(JeuWidget):
         """
         N=0
 #        while self.game_state(self.tiles):
-        while N<10:
+        while N<100:
             move = self.get_best_move(self.tiles)
             self.move_tiles(move)
             self.update()
