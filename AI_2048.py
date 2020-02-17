@@ -27,10 +27,11 @@ class AI_solver(JeuWidget):
         QtWidgets.QApplication.processEvents()
         
     def get_score(self,tiles,first_dir,method):
+        scoring_methods = ["corner","pyramid","empty","snake"]
         if method == "montecarlo":
             return self.get_score_montecarlo(tiles,first_dir)
-        elif method == "scoring":
-            return self.get_score_scoring(tiles,first_dir)
+        elif method in scoring_methods:
+            return self.get_score_scoring(tiles,first_dir,method)
         
     def get_score_montecarlo(self,tiles,first_dir):
         """
@@ -57,7 +58,7 @@ class AI_solver(JeuWidget):
             
         return max_tile / SIMULATION_NUMBER
     
-    def get_score_scoring(self,tiles,first_dir):
+    def get_score_scoring(self,tiles,first_dir,method):
         """ 
         Given a board and a first move, get a score by playing one game
         The score is evaluated by comparison with a snake-like pattern
@@ -67,23 +68,15 @@ class AI_solver(JeuWidget):
         stiles = self.add_tile(stiles)
         if not moved:
             return False
-        new_score = self.evaluation(stiles,0,"corner")
-        return new_score
-        
+        return self.evaluation(stiles,method)        
 
-
-
-    def evaluation(self,tiles,move_score,method):
-        if method == "score":
-            return move_score
-        elif method == "corner":
+    def evaluation(self,tiles,method):
+        if method == "corner":
             return np.sum(tiles*CORNER)
         elif method == "pyramid":
             return np.sum(tiles*PYRAMID)
         elif method == "empty":
             # gives 1 point per empty cell
-            score=self.gridSize**2 - len(np.argwhere(self.tiles))
-            print(score)
             return self.gridSize**2 - len(np.argwhere(self.tiles))
         elif method == "snake":
             snake = []
@@ -92,11 +85,11 @@ class AI_solver(JeuWidget):
                 
             m = max(snake)
             return sum(x/10**n for n,x in enumerate(snake)) - math.pow((tiles[3][0] != m)*abs(tiles[3][0]-m),2)
-        
-        
+               
     def get_best_move(self,tiles,method):
         """ 
-        Should I move left,right,up or down?"
+        Should I move left,right,up or down?
+        Tests the 4 moves and returns the one with best score
         """
         available_dirs = []
         results = []
@@ -105,36 +98,18 @@ class AI_solver(JeuWidget):
             if result != False:
                 results.append(result)
                 available_dirs.append(d)
-        print(results)
-        return available_dirs[results.index(max(results))]
-#        my_fun = self.get_score
-#        mat = self.tiles
-#        with Pool(4) as p:
-#            results = p.starmap(self.get_score,[(self.tiles,DIRS[0]),(self.tiles,DIRS[1]),
-#                                                (self.tiles,DIRS[2]),(self.tiles,DIRS[3])])  
-#            results = p.starmap(my_fun,[(mat,DIRS[0]),(mat,DIRS[1])])
-#            return DIRS[results.index(max(results))]                                  
+        return available_dirs[results.index(max(results))]                                
         
     def play_move(self,method):
         """
         Moves in best direction
         """
         move = self.get_best_move(self.tiles,method)
-        self.move_tiles(move)
-        
-    def play_moves(self,N,method):
-        """
-        Move N times in best direction
-        """
-        for i in range(0,N):
-            self.play_move(method)
-            self.update()
+        self.move_tiles(move)        
         
     def auto_solve(self,method):
         """
-        Joue 10 coups tout seul
-        On update le painter après chaque move pour voir l'AI jouer en direct
-        Mais ça ne marche pas...
+        Auto-plays the game from current tile until game over
         """
         N=0
         tic = time.perf_counter()
@@ -143,16 +118,15 @@ class AI_solver(JeuWidget):
             move = self.get_best_move(self.tiles,method)
             self.move_tiles(move)
             self.update()
-            QtWidgets.QApplication.processEvents()
+            QtWidgets.QApplication.processEvents() #updates the Widget
             N+=1
-            print(N)
             time.sleep(0.2)
         toc = time.perf_counter()
         print("Nombre de coups joués:" + str(N))
         print("Temps écoulé:" + str(toc-tic)+"s")
-        time.sleep(1) # arrête le programme 1s après chaque coup pour qu'on voit l'AI jouer
+        time.sleep(1)
     
         
 AI = AI_solver(None)
 AI.show()
-AI.auto_solve("scoring") #fait jouer l'AI tout seul 10 coups
+AI.auto_solve("snake")
