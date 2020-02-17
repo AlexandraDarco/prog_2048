@@ -281,16 +281,7 @@ class JeuWidget(Jeu,Widget2048):
         if self.resetRect.contains(self.lastPoint.x(),self.lastPoint.y()) and self.resetRect.contains(e.pos().x(),e.pos().y()):
             if QtWidgets.QMessageBox.question(self,'','Are you sure you want to start a new game?')==QtWidgets.QMessageBox.Yes:
                 self.reset_game()
-        elif self.gameRunning and self.lastPoint is not None:
-            dx = e.pos().x()-self.lastPoint.x()
-            dy = e.pos().y()-self.lastPoint.y()
-            if abs(dx)>abs(dy) and abs(dx)>10:
-                 if dx>0:
-                     self.right()
-                 else:
-                     self.left()
                      
-    
 
 if __name__=='__main__':
     APP = QtWidgets.QApplication.instance()
