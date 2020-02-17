@@ -11,12 +11,13 @@ import numpy as np
 from PyQt5 import QtCore, QtWidgets,QtGui
 import random
 import functools as fn
+import matplotlib.pyplot as plt
 
 DIRECTIONS = {"right":(0,1),"left":(0,-1),"up":(-1,0),"down":(1,0)}
 DIRS = ["right","left","up","down"]
 SIMULATION_NUMBER = 100
-CORNER = [[0,0,0,0],[0,0,0,0],[0,0,0,100],[0,0,100,200]]
-PYRAMID = [[2**(i+j) for i in range(0,4)] for j in range(0,4)]
+CORNER = [[1,1,1,1],[1,1,1,1],[1,1,1,100],[1,1,100,200]]
+PYRAMID = [[10**(i+j) for i in range(0,4)] for j in range(0,4)]
     
 class Widget2048(QtWidgets.QWidget):
     """ defines grid, colors, buttons on the widget """ 
@@ -159,7 +160,7 @@ class Jeu:
             self.add_tile(self.tiles)
             self.gameRunning = False
             QtWidgets.QApplication.processEvents()
-            QtWidgets.QMessageBox.information(self,'','Game Over')
+#            QtWidgets.QMessageBox.information(self,'','Game Over')
             
     def rotateMatrix(self,mat):
         """rotates a N x N matrix by 90 degrees in 
@@ -257,9 +258,7 @@ class Jeu:
         self.right = fn.partial(self.move_tiles,direction="right")
 
     def left(self):
-        self.left = fn.partial(self.move_tiles,direction="left")
-        
-        
+        self.left = fn.partial(self.move_tiles,direction="left")                
         
 class AI_solver(Jeu):
     def __init__(self):
@@ -356,28 +355,24 @@ class AI_solver(Jeu):
         N=0
         tic = time.perf_counter()
         while self.game_state(self.tiles):
- #       while N<10:
             move = self.get_best_move(self.tiles,method)
             self.move_tiles(move)
             self.update()
-            #QtWidgets.QApplication.processEvents() #updates the Widget
+            QtWidgets.QApplication.processEvents() #updates the Widget
             N+=1
-            time.sleep(0.2)
+#            time.sleep(0.2)
         toc = time.perf_counter()
         print("Nombre de coups joués:" + str(N))
         print("Temps écoulé:" + str(toc-tic)+"s")
-        time.sleep(1)
-         
-  
-
-
+#        time.sleep(1)
+        return self.score, np.max(self.tiles),toc-tic,N
+           
 class JeuWidget(Widget2048,AI_solver):
     """ link between class jeu and class Widget, and effect of the keyboard and/or buttons"""
     def __init__(self,parent):
         Widget2048.__init__(self, parent)
         AI_solver.__init__(self)
-        QtWidgets.QApplication.processEvents()
-                     
+        QtWidgets.QApplication.processEvents()                     
                 
     def keyPressEvent(self,e):
         """ link between key press and event (left, right, down, up)"""
@@ -404,30 +399,80 @@ class JeuWidget(Widget2048,AI_solver):
             if QtWidgets.QMessageBox.question(self,'','Are you sure you want to start a new game?')==QtWidgets.QMessageBox.Yes:
                 self.reset_game()
         elif self.solveRect.contains(self.lastPoint.x(),self.lastPoint.y()) and self.solveRect.contains(e.pos().x(),e.pos().y()):
-            if QtWidgets.QMessageBox.question(self,'','Do you want to solve the game with Monte-Carlo (Yes) or Snake (No) method?')==QtWidgets.QMessageBox.Yes:
-                self.auto_solve("snake")
-#            msgbox = QtWidgets.QMessageBox()
-#            msgbox.setWindowTitle("Information")
-#            msgbox.setText('Test')
-#            msgbox.addButton('Monte-Carlo',QtWidgets.QMessageBox.YesRole)
-#            msgbox.addButton('Snake', QtWidgets.QMessageBox.Ok)
+            reply = QtWidgets.QMessageBox.question(self,'','Do you want to solve the game with Snake (Yes) or Monte-Carlo (No) method?')
+            if reply == QtWidgets.QMessageBox.No:
+                self.auto_solve("montecarlo")
+            elif reply == QtWidgets.QMessageBox.Yes:
+                self.auto_solve("pyramid")
+                
+class Stats(JeuWidget):
+    def __init__(self,parent, N_trials = 1000, method = "pyramid"):
+        JeuWidget.__init__(self,parent)
+        self.N_trials = N_trials
+        self.method = method
+        
+    def run_stat(self):
+        data_score = []
+        data_max_tile = []
+        data_time = []
+        data_N_moves = []
+
+        for i in range(0,self.N_trials):
+            score,max_tile,t,N_moves = self.auto_solve(self.method)
+            data_score.append(score)
+            data_max_tile.append(max_tile)
+            data_time.append(t)
+            data_N_moves.append(N_moves)
+            self.reset_game()
+            print("Simulation " + str(i))
+        
+        return data_score, data_max_tile, data_time, data_N_moves
+    
+    def save_data(self,data_score, data_max_tile, data_time, data_N_moves):       
+         f = open("data_pyramid10_1000", "w")
+         f.write("# score max_tile time N_moves\n")        # column names
+         np.savetxt(f, np.array([data_score,data_max_tile,data_time,data_N_moves]).T)
+         # loading:
+         
+    def load_data(self,file_name):
+         data_score, data_max_tile, data_time, data_N_moves = np.loadtxt(file_name, unpack=True)
+        
+        
+        
+    def plot_stat(self):
+        data_score, data_max_tile, data_time, data_N_moves = self.run_stat()
+        
+        ##
+        plt.figure()
+        plt.plot(range(0,self.N_trials),data_max_tile)
+        plt.plot(range(0,self.N_trials),data_score)
+        plt.show()
+        
+        
+        
+        distrib = []
+        i = 1
+        while i<12:
+            distrib.append(np.count_nonzero(np.array(data_max_tile) == 2**i))
+            i += 1
+        
             
+            
+        
+    
+S=Stats(None)
+S.show()
+data_score, data_max_tile, data_time, data_N_moves = S.run_stat()
 
-#            if QtWidgets.QMessageBox.question(self,'','Are you sure you want to auto-solve the game?')==QtWidgets.QMessageBox.Yes:
-#                self.auto_solve("")
-                         
-#AI.auto_solve("snake")
-
-
-if __name__=='__main__':
-    APP = QtWidgets.QApplication.instance()
-    IS_STANDARD_CONSOLE = (APP is None)
-    print('running')
-    if IS_STANDARD_CONSOLE: # launched from standard console (not ipython console)
-        print('running in console')
-        APP = QtWidgets.QApplication(["test"])
-    M = JeuWidget(None)
-    M.show()
-    if IS_STANDARD_CONSOLE:
-        APP.exec_()
+#if __name__=='__main__':
+#    APP = QtWidgets.QApplication.instance()
+#    IS_STANDARD_CONSOLE = (APP is None)
+#    print('running')
+#    if IS_STANDARD_CONSOLE: # launched from standard console (not ipython console)
+#        print('running in console')
+#        APP = QtWidgets.QApplication(["test"])
+#    M = JeuWidget(None)
+#    M.show()
+#    if IS_STANDARD_CONSOLE:
+#        APP.exec_()
         
