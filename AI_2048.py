@@ -27,6 +27,7 @@ class AI_solver(JeuWidget):
         QtWidgets.QApplication.processEvents()
         
     def get_score(self,tiles,first_dir,method):
+        """ get score according to the method chosen for resolution """
         scoring_methods = ["corner","pyramid","empty","snake"]
         if method == "montecarlo":
             return self.get_score_montecarlo(tiles,first_dir)
@@ -71,6 +72,7 @@ class AI_solver(JeuWidget):
         return self.evaluation(stiles,method)        
 
     def evaluation(self,tiles,method):
+        """ evaluation fonction according to the methode chosen, used in get_score"""
         if method == "corner":
             return np.sum(tiles*CORNER)
         elif method == "pyramid":
