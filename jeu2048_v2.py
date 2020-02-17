@@ -230,7 +230,7 @@ class Jeu:
         new_tiles = self.rotate_back(new_tiles,d)
         return new_tiles, moved, score
         
-    def play_move(self,direction):
+    def move_tiles(self,direction):
         """ performs moves in the requested direction """
         self.tiles,moved,score = self.move(self.tiles,direction)
         self.score += score
@@ -238,16 +238,16 @@ class Jeu:
             self.updateTiles()
             
     def up(self):
-        self.up = fn.partial(self.play_move,direction="up")
+        self.up = fn.partial(self.move_tiles,direction="up")
             
     def down(self):
-        self.down = fn.partial(self.play_move,direction="down")
+        self.down = fn.partial(self.move_tiles,direction="down")
 
     def right(self):
-        self.right = fn.partial(self.play_move,direction="right")
+        self.right = fn.partial(self.move_tiles,direction="right")
 
     def left(self):
-        self.left = fn.partial(self.play_move,direction="left")
+        self.left = fn.partial(self.move_tiles,direction="left")
          
     
 class JeuWidget(Jeu,Widget2048):
