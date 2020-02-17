@@ -47,14 +47,12 @@ class Widget2048(QtWidgets.QWidget):
         self.hiScoreLabel = QtCore.QRectF(100,25,80,self.panelHeight-30)
         self.lastPoint = None
         self.resize(QtCore.QSize(width,width+self.panelHeight))
-      
-    def resizeEvent(self,e):
-        width = min(e.size().width(),e.size().height()-self.panelHeight)
         self.tileSize = (width-self.tileMargin*(self.gridSize+1))/self.gridSize
         self.font = QtGui.QFont('Arial',self.tileSize/4)
-        
+      
         
     def paintEvent(self,event):
+        """ set colors of tiles and boxes according to their values"""
         painter = QtGui.QPainter(self)
         painter.setPen(QtCore.Qt.NoPen)
         painter.setBrush(self.backgroundBrush)
@@ -91,11 +89,9 @@ class Widget2048(QtWidgets.QWidget):
                     painter.setPen(self.darkPen if tile<16 else self.lightPen)
                     painter.drawText(rect,str(tile),QtGui.QTextOption(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter))
         painter.end()
-        
-    def trigger_refresh(self):
-        self.update()
 
 class Jeu:
+    """ moves in order to play at 2048 """
     def __init__(self, gridSize = 4):
         self.gameRunning = False
         self.gridSize =gridSize
@@ -103,6 +99,7 @@ class Jeu:
         self.reset_game()
         
     def reset_game(self):
+        """ reset the game"""
         self.tiles = np.zeros((self.gridSize,self.gridSize))
         self.availableSpots = list(range(0,self.gridSize**2))
         self.score = 0
@@ -134,17 +131,6 @@ class Jeu:
                     return True
         return False
             
-#    def movesAvailable(self):
-#        """ Look for available shots to find out if game over or not """
-#        if not len(self.availableSpots)==0:
-#            return True
-#        for i in range(0,self.gridSize):
-#            for j in range(0,self.gridSize):
-#                if i<self.gridSize-1 and self.tiles[i][j] == self.tiles[i+1][j]:
-#                    return True
-#                if j<self.gridSize-1 and self.tiles[i][j] == self.tiles[i][j+1]:
-#                    return True
-#        return False
     
     def updateTiles(self):
         """ update the value of the boxes following the move made:
@@ -212,20 +198,7 @@ class Jeu:
             times = 3
         self.rotateMatrixMultiple(tiles,times)
         return tiles                                
-        
-#    def move(self,direction):
-#        """ rotate, move, rotate back ; depends on the direction """
-#        tiles = np.array(self.tiles)
-#        direction = DIRECTIONS[direction]
-#        #rotates matrix
-#        tiles = self.rotate(tiles,direction) 
-#        #moves
-#        moved,tiles_moved = self.move_left(tiles.tolist())
-#        if moved:
-#        #rotates matrix back
-#            self.tiles = self.rotate_back(np.array(tiles_moved),direction)
-#            self.tiles.tolist()
-#            self.updateTiles()
+
         
     def move_left(self,tiles):
         """ moves all the tiles to the left if it is possible """
@@ -250,117 +223,32 @@ class Jeu:
         return moved,tiles,score
         
     def move(self,tiles,direction):
+        """ moves all the tiles in requested directions """
         d = DIRECTIONS[direction]
         rotated_tiles = self.rotate(tiles,d)
         moved,new_tiles,score = self.move_left(rotated_tiles)
         new_tiles = self.rotate_back(new_tiles,d)
         return new_tiles, moved, score
         
-    def move_tiles(self,direction):
+    def play_move(self,direction):
+        """ performs moves in the requested direction """
         self.tiles,moved,score = self.move(self.tiles,direction)
         self.score += score
         if moved:
             self.updateTiles()
             
     def up(self):
-        self.up = fn.partial(self.move_tiles,direction="up")
+        self.up = fn.partial(self.play_move,direction="up")
             
     def down(self):
-        self.down = fn.partial(self.move_tiles,direction="down")
+        self.down = fn.partial(self.play_move,direction="down")
 
     def right(self):
-        self.right = fn.partial(self.move_tiles,direction="right")
+        self.right = fn.partial(self.play_move,direction="right")
 
     def left(self):
-        self.left = fn.partial(self.move_tiles,direction="left")
-    
-     
-#    def up(self):
-#        moved = False
-#        for gridX in range(0,self.gridSize):
-#            for gridY in range(1,self.gridSize):
-#                if self.tiles[gridX][gridY] is not None:
-#                    i = gridY
-#                    while i-1>=0 and self.tiles[gridX][i-1] is  None:
-#                        i -= 1
-#                    if i-1>=0 and self.tiles[gridX][i-1].value==self.tiles[gridX][gridY].value:
-#                        self.score += self.tiles[gridX][gridY].value*2
-#                        self.tiles[gridX][i-1].value *= 2
-#                        self.tiles[gridX][gridY] = None
-#                        moved = True
-#                    elif i<gridY:
-#                        self.tiles[gridX][i] = self.tiles[gridX][gridY]
-#                        self.tiles[gridX][gridY] = None
-#                        moved = True
-#        if moved:
-#            self.updateTiles()
-#            
-#    def down(self):
-#        moved = False
-#        for gridX in range(0,self.gridSize):
-#            for gridY in range(self.gridSize-2,-1,-1):
-#                if self.tiles[gridX][gridY] is not None:
-#                    i = gridY
-#                    while i+1<self.gridSize and self.tiles[gridX][i+1] is None:
-#                        i += 1
-#                    if i+1<self.gridSize and self.tiles[gridX][i+1].value==self.tiles[gridX][gridY].value:
-#                        self.score += self.tiles[gridX][gridY].value*2
-#                        self.tiles[gridX][i+1].value *= 2
-#                        self.tiles[gridX][gridY] = None
-#                        moved = True
-#                    elif i>gridY:
-#                        self.tiles[gridX][i] = self.tiles[gridX][gridY]
-#                        self.tiles[gridX][gridY] = None
-#                        moved = True
-#        if moved:
-#           self.updateTiles()
-#           
-#    def left(self):
-#        moved = False
-#        for gridX in range(1,self.gridSize):
-#            for gridY in range(0,self.gridSize):
-#                if self.tiles[gridX][gridY] is not None:
-#                    i = gridX
-#                    while i-1>=0 and self.tiles[i-1][gridY] is None:
-#                        i -= 1
-#                    if i-1>=0 and self.tiles[i-1][gridY].value==self.tiles[gridX][gridY].value:
-#                        self.score += self.tiles[gridX][gridY].value*2
-#                        self.tiles[i-1][gridY].value *= 2
-#                        self.tiles[gridX][gridY] = None
-#                        moved = True
-#                    elif i<gridX:
-#                        self.tiles[i][gridY] = self.tiles[gridX][gridY]
-#                        self.tiles[gridX][gridY] = None
-#                        moved = True
-#        if moved:
-#            self.updateTiles()
-#            
-#    def right(self):
-#        moved = False
-#        for gridX in range(self.gridSize-2,-1,-1):
-#            for gridY in range(0,self.gridSize):
-#                if self.tiles[gridX][gridY] is not None:
-#                    i = gridX
-#                    while i+1<self.gridSize and self.tiles[i+1][gridY] is None:
-#                        i +=1
-#                    if i+1<self.gridSize and self.tiles[i+1][gridY].value==self.tiles[gridX][gridY].value:
-#                        self.score += self.tiles[gridX][gridY].value*2
-#                        self.tiles[i+1][gridY].value *= 2
-#                        self.tiles[gridX][gridY] = None
-#                        moved = True
-#                    elif i>gridX:
-#                        self.tiles[i][gridY] = self.tiles[gridX][gridY]
-#                        self.tiles[gridX][gridY] = None
-#                        moved = True
-#        if moved:
-#            self.updateTiles()
-
-    
-
-            
-
-    
-       
+        self.left = fn.partial(self.play_move,direction="left")
+         
     
 class JeuWidget(Jeu,Widget2048):
     """ link between class jeu and class Widget, and effect of the keyboard and/or buttons"""
@@ -370,6 +258,7 @@ class JeuWidget(Jeu,Widget2048):
                      
                 
     def keyPressEvent(self,e):
+        """ link between key press and event (left, right, down, up)"""
         if not self.gameRunning:
             return
         if e.key() == QtCore.Qt.Key_Escape:
@@ -384,9 +273,11 @@ class JeuWidget(Jeu,Widget2048):
             self.right()
             
     def mousePressEvent(self,e):
+        """ detects if button is clicked """
         self.lastPoint = e.pos()
         
     def mouseReleaseEvent(self,e):
+        """ acts if button clicked """
         if self.resetRect.contains(self.lastPoint.x(),self.lastPoint.y()) and self.resetRect.contains(e.pos().x(),e.pos().y()):
             if QtWidgets.QMessageBox.question(self,'','Are you sure you want to start a new game?')==QtWidgets.QMessageBox.Yes:
                 self.reset_game()
@@ -399,21 +290,6 @@ class JeuWidget(Jeu,Widget2048):
                  else:
                      self.left()
                      
-                     
-#class AI_test(Jeu):
-#    def __init__(self):
-#        Jeu.__init__(self,gridSize=4)
-#        
-#    def get_score(tiles,first_dir):
-#        """
-#        Given a board and a first move, get a score by playing N_simulation random game
-#        """
-#        
-#        stiles = tiles.copy()
-#        
-#        
-#        
-#AI = AI_test()
     
 
 if __name__=='__main__':
