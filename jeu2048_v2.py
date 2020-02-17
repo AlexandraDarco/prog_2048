@@ -427,3 +427,4 @@ if __name__=='__main__':
     M.show()
     if IS_STANDARD_CONSOLE:
         APP.exec_()
+        

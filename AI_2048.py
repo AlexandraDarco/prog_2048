@@ -67,7 +67,7 @@ class AI_solver(JeuWidget):
         stiles = self.add_tile(stiles)
         if not moved:
             return False
-        new_score = self.evaluation(stiles,0,"snake")
+        new_score = self.evaluation(stiles,0,"corner")
         return new_score
         
 
