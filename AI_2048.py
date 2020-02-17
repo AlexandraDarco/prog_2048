@@ -8,7 +8,6 @@ import numpy as np
 import math
 import random
 import time
-from multiprocessing.pool import Pool
 import functools as fn
 from PyQt5 import QtCore, QtWidgets,QtGui
 from jeu2048_v2 import Jeu,JeuWidget
@@ -36,6 +35,7 @@ class AI_solver(JeuWidget):
     def get_score_montecarlo(self,tiles,first_dir):
         """
         Given a board and a first move, get a score by playing N_simulation random game
+        The score is evaluated by averaging the maximum tile obtained in each simulation
         """
         stiles = tiles.copy()
         stiles, moved, score = self.move(stiles, first_dir)
@@ -59,13 +59,14 @@ class AI_solver(JeuWidget):
     
     def get_score_scoring(self,tiles,first_dir):
         """ 
-        Given a board and a first move, get a score by playing N_generation games 
+        Given a board and a first move, get a score by playing one game
+        The score is evaluated by comparison with a snake-like pattern
         """
         stiles = tiles.copy()
         stiles, moved, score = self.move(stiles, first_dir)
         stiles = self.add_tile(stiles)
         if not moved:
-            return -1
+            return False
         new_score = self.evaluation(stiles,0,"snake")
         return new_score
         
