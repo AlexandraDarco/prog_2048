@@ -6,6 +6,7 @@ Created on Mon Feb 17 13:20:18 2020
 """
 
 import time
+import math
 import numpy as np
 from PyQt5 import QtCore, QtWidgets,QtGui
 import random
@@ -19,9 +20,10 @@ PYRAMID = [[2**(i+j) for i in range(0,4)] for j in range(0,4)]
     
 class Widget2048(QtWidgets.QWidget):
     """ defines grid, colors, buttons on the widget """ 
-    def __init__(self, parent, width=340, gridSize=4):
+    def __init__(self, parent, width=400, gridSize=4):
         QtWidgets.QWidget.__init__(self, parent)
         self.panelHeight = 80
+        self.panelWidth = 80
         self.gridSize = gridSize
         
         self.backgroundBrush = QtGui.QBrush(QtGui.QColor(0xbbada0))
@@ -45,11 +47,12 @@ class Widget2048(QtWidgets.QWidget):
 		}
         self.lightPen = QtGui.QPen(QtGui.QColor(0xf9f6f2))
         self.darkPen = QtGui.QPen(QtGui.QColor(0x776e65))
-        self.scoreRect = QtCore.QRectF(10,10,80,self.panelHeight-20)
-        self.hiScoreRect = QtCore.QRectF(100,10,80,self.panelHeight-20)
-        self.resetRect = QtCore.QRectF(190,10,80,self.panelHeight-20)
-        self.scoreLabel = QtCore.QRectF(10,25,80,self.panelHeight-30)
-        self.hiScoreLabel = QtCore.QRectF(100,25,80,self.panelHeight-30)
+        self.scoreRect = QtCore.QRectF(10,10,self.panelWidth,self.panelHeight-20)
+        self.hiScoreRect = QtCore.QRectF(100,10,self.panelWidth,self.panelHeight-20)
+        self.resetRect = QtCore.QRectF(190,10,self.panelWidth,self.panelHeight-20)
+        self.scoreLabel = QtCore.QRectF(10,25,self.panelWidth,self.panelHeight-30)
+        self.hiScoreLabel = QtCore.QRectF(100,25,self.panelWidth,self.panelHeight-30)
+        self.solveRect = QtCore.QRectF(280,10,self.panelWidth,self.panelHeight-20)
         self.lastPoint = None
         self.resize(QtCore.QSize(width,width+self.panelHeight))
         self.tileSize = (width-self.tileMargin*(self.gridSize+1))/self.gridSize
@@ -66,6 +69,7 @@ class Widget2048(QtWidgets.QWidget):
         painter.drawRect(self.scoreRect)
         painter.drawRect(self.hiScoreRect)
         painter.drawRect(self.resetRect)
+        painter.drawRect(self.solveRect)
         painter.setFont(QtGui.QFont('Arial',9))
         painter.setPen(self.darkPen)
         painter.drawText(QtCore.QRectF(10,15,80,20),'SCORE',QtGui.QTextOption(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter))
@@ -73,6 +77,7 @@ class Widget2048(QtWidgets.QWidget):
         painter.setFont(QtGui.QFont('Arial',15))
         painter.setPen(self.lightPen)
         painter.drawText(self.resetRect,'RESET',QtGui.QTextOption(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter))
+        painter.drawText(self.solveRect,'SOLVE',QtGui.QTextOption(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter))
         painter.setFont(QtGui.QFont('Arial',15))
         painter.setPen(self.lightPen)
         painter.drawText(self.scoreLabel,str(int(self.score)),QtGui.QTextOption(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter))
@@ -94,6 +99,7 @@ class Widget2048(QtWidgets.QWidget):
                     painter.setPen(self.darkPen if tile<16 else self.lightPen)
                     painter.drawText(rect,str(tile),QtGui.QTextOption(QtCore.Qt.AlignHCenter|QtCore.Qt.AlignVCenter))
         painter.end()
+        
 
 class Jeu:
     """ moves in order to play at 2048 """
@@ -203,7 +209,6 @@ class Jeu:
             times = 3
         self.rotateMatrixMultiple(tiles,times)
         return tiles                                
-
         
     def move_left(self,tiles):
         """ moves all the tiles to the left if it is possible """
@@ -227,7 +232,7 @@ class Jeu:
             
         return moved,tiles,score
         
-    def move(self,tiles,direction):
+    def moves(self,tiles,direction):
         """ moves all the tiles in requested directions """
         d = DIRECTIONS[direction]
         rotated_tiles = self.rotate(tiles,d)
@@ -237,7 +242,7 @@ class Jeu:
         
     def move_tiles(self,direction):
         """ performs moves in the requested direction """
-        self.tiles,moved,score = self.move(self.tiles,direction)
+        self.tiles,moved,score = self.moves(self.tiles,direction)
         self.score += score
         if moved:
             self.updateTiles()
@@ -259,7 +264,7 @@ class Jeu:
 class AI_solver(Jeu):
     def __init__(self):
         Jeu.__init__(self)
-        #QtWidgets.QApplication.processEvents()
+        QtWidgets.QApplication.processEvents()
         
     def get_score(self,tiles,first_dir,method):
         """ get score according to the method chosen for resolution """
@@ -275,7 +280,7 @@ class AI_solver(Jeu):
         The score is evaluated by averaging the maximum tile obtained in each simulation
         """
         stiles = tiles.copy()
-        stiles, moved, score = self.move(stiles, first_dir)
+        stiles, moved, score = self.moves(stiles, first_dir)
         if not moved:
             return -1
         total_score = 0
@@ -285,7 +290,7 @@ class AI_solver(Jeu):
             simulation_tiles = tiles.copy()
             simulation_tiles = self.add_tile(simulation_tiles)
             while self.game_state(simulation_tiles) == True:
-                simulation_tiles,moved,move_score = self.move(simulation_tiles,DIRS[random.randint(0, 3)])
+                simulation_tiles,moved,move_score = self.moves(simulation_tiles,DIRS[random.randint(0, 3)])
                 if moved:
                     simulation_tiles = self.add_tile(simulation_tiles)
                 game_score += move_score
@@ -300,7 +305,7 @@ class AI_solver(Jeu):
         The score is evaluated by comparison with a snake-like pattern
         """
         stiles = tiles.copy()
-        stiles, moved, score = self.move(stiles, first_dir)
+        stiles, moved, score = self.moves(stiles, first_dir)
         stiles = self.add_tile(stiles)
         if not moved:
             return False
@@ -363,12 +368,15 @@ class AI_solver(Jeu):
         print("Temps écoulé:" + str(toc-tic)+"s")
         time.sleep(1)
          
-    
-class JeuWidget(Widget2048, AI_solver):
+  
+
+
+class JeuWidget(Widget2048,AI_solver):
     """ link between class jeu and class Widget, and effect of the keyboard and/or buttons"""
     def __init__(self,parent):
         Widget2048.__init__(self, parent)
         AI_solver.__init__(self)
+        QtWidgets.QApplication.processEvents()
                      
                 
     def keyPressEvent(self,e):
@@ -395,23 +403,20 @@ class JeuWidget(Widget2048, AI_solver):
         if self.resetRect.contains(self.lastPoint.x(),self.lastPoint.y()) and self.resetRect.contains(e.pos().x(),e.pos().y()):
             if QtWidgets.QMessageBox.question(self,'','Are you sure you want to start a new game?')==QtWidgets.QMessageBox.Yes:
                 self.reset_game()
-        elif self.gameRunning and self.lastPoint is not None:
-            dx = e.pos().x()-self.lastPoint.x()
-            dy = e.pos().y()-self.lastPoint.y()
-            if abs(dx)>abs(dy) and abs(dx)>10:
-                 if dx>0:
-                     self.right()
-                 else:
-                     self.left()
-                     
-     
-                     
+        elif self.solveRect.contains(self.lastPoint.x(),self.lastPoint.y()) and self.solveRect.contains(e.pos().x(),e.pos().y()):
+            if QtWidgets.QMessageBox.question(self,'','Do you want to solve the game with Monte-Carlo (Yes) or Snake (No) method?')==QtWidgets.QMessageBox.Yes:
+                self.auto_solve("snake")
+#            msgbox = QtWidgets.QMessageBox()
+#            msgbox.setWindowTitle("Information")
+#            msgbox.setText('Test')
+#            msgbox.addButton('Monte-Carlo',QtWidgets.QMessageBox.YesRole)
+#            msgbox.addButton('Snake', QtWidgets.QMessageBox.Ok)
+            
 
-    
-        
-AI = AI_solver(None)
-AI.show()
-AI.auto_solve("snake")
+#            if QtWidgets.QMessageBox.question(self,'','Are you sure you want to auto-solve the game?')==QtWidgets.QMessageBox.Yes:
+#                self.auto_solve("")
+                         
+#AI.auto_solve("snake")
 
 
 if __name__=='__main__':
