@@ -231,16 +231,16 @@ class Jeu:
         score = 0
         for gridX in range(1,len(tiles)):
             for gridY in range(0,len(tiles)):
-                if tiles[gridX][gridY] != 0:
+                if tiles[gridX][gridY] != 0: # continues if tile is non zero
                     i = gridX
-                    while i-1>=0 and tiles[i-1][gridY] == 0:
+                    while i-1>=0 and tiles[i-1][gridY] == 0: # go all over null tiles
                        i -= 1
-                    if i-1>=0 and tiles[i-1][gridY] == tiles[gridX][gridY]:
+                    if i-1>=0 and tiles[i-1][gridY] == tiles[gridX][gridY]: # merge tiles with the same value
                         score += tiles[gridX][gridY]*2
                         tiles[i-1][gridY] *= 2
                         tiles[gridX][gridY] = 0
                         moved = True
-                    elif i<gridX:
+                    elif i<gridX: # replaces tiles
                         tiles[i][gridY] = tiles[gridX][gridY]
                         tiles[gridX][gridY] = 0
                         moved = True
