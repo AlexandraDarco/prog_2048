@@ -12,6 +12,20 @@ from PyQt5 import QtCore, QtWidgets,QtGui
 import random
 import functools as fn
 
+"""
+2048 game with Artificial Intelligence solver
+
+class structure:
+    - Widget2048 defines Widget structure
+    - Jeu defines games logic
+    - AI_solver is an Artificial Intelligence that auto-solves the game
+    - JeuWidget connects users inputs to game functions
+    
+to run the game from console:
+    APP = JeuWidget(None)
+    APP.show()
+"""
+
 
 DIRECTIONS = {"right":(0,1),"left":(0,-1),"up":(-1,0),"down":(1,0)}
 DIRS = ["right","left","up","down"]
@@ -391,7 +405,7 @@ class AI_solver(Jeu):
             self.update()
             QtWidgets.QApplication.processEvents() #updates the Widget
             N+=1
-            time.sleep(0.2)
+            time.sleep(0.1)
         toc = time.perf_counter()
         print("Nombre de coups joués:" + str(N))
         print("Temps écoulé:" + str(toc-tic)+"s")
@@ -401,7 +415,7 @@ class AI_solver(Jeu):
 class JeuWidget(Widget2048,AI_solver):
     """ 
     Link between class AI_solver and class Widget2048,
-    Connects the keyboard and mouse inputs to AI_solvers's function
+    Connects the keyboard and mouse inputs to AI_solver's functions
     """
     def __init__(self,parent):
         Widget2048.__init__(self, parent)
@@ -478,7 +492,7 @@ class Stats(JeuWidget):
         
         
                
-
+# To run the game from console or terminal : 
 if __name__=='__main__':
     APP = QtWidgets.QApplication.instance()
     IS_STANDARD_CONSOLE = (APP is None)
