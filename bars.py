@@ -8,6 +8,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+def plot_stat(self):
+    data_score, data_max_tile, data_time, data_N_moves = self.run_stat()
+    
+    ##
+    plt.figure()
+    plt.plot(range(0,self.N_trials),data_max_tile)
+    plt.plot(range(0,self.N_trials),data_score)
+    plt.show()
+    
+            
+    distrib = []
+    i = 1
+    while i<12:
+        distrib.append(np.count_nonzero(np.array(data_max_tile) == 2**i))
+        i += 1
 
 distrib_snake = [0, 0, 0, 1, 15, 71, 254, 424, 209, 25, 1]
 distrib_pyramid2 = [0, 0, 0, 0, 36, 254, 493, 212, 5, 0, 0]

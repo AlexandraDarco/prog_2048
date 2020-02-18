@@ -11,11 +11,12 @@ import numpy as np
 from PyQt5 import QtCore, QtWidgets,QtGui
 import random
 import functools as fn
-import matplotlib.pyplot as plt
+
 
 DIRECTIONS = {"right":(0,1),"left":(0,-1),"up":(-1,0),"down":(1,0)}
 DIRS = ["right","left","up","down"]
-SIMULATION_NUMBER = 100
+SIMULATION_NUMBER = 500 # number of simulation for AI Monte Carlo method
+# tiles weighting for AI evaluation: 
 CORNER = [[1,1,1,1],[1,1,1,1],[1,1,1,100],[1,1,100,200]]
 PYRAMID = [[10**(i+j) for i in range(0,4)] for j in range(0,4)]
     
@@ -103,24 +104,15 @@ class Widget2048(QtWidgets.QWidget):
         
 
 class Jeu:
-    """ moves in order to play at 2048 """
+    """ contains game's logic: moves in order to play at 2048 """
     def __init__(self, gridSize = 4):
         self.gameRunning = False
         self.gridSize =gridSize
         self.hiScore = 0
         self.reset_game()
-        
-    def reset_game(self):
-        """ reset the game"""
-        self.tiles = np.zeros((self.gridSize,self.gridSize))
-        self.availableSpots = list(range(0,self.gridSize**2))
-        self.score = 0
-        self.add_tile(self.tiles)
-        self.add_tile(self.tiles)
-        self.gameRunning = True
-        
+
     def add_tile(self,tiles):
-        """ add randomly a 2 in the grid at each iteration, 10% chances it's a 4 """
+        """ adds randomly a 2 in the grid at each iteration, 10% chances it's a 4 """
         zeros = np.argwhere(tiles == 0)
         if zeros.any():
             value = 2 if random.random()<0.9 else 4 
@@ -130,8 +122,17 @@ class Jeu:
             tiles[indx][indy] = value
         return tiles
     
+    def reset_game(self):
+        """ resets the game: clears board and adds two tiles"""
+        self.tiles = np.zeros((self.gridSize,self.gridSize))
+        self.availableSpots = list(range(0,self.gridSize**2))
+        self.score = 0
+        self.add_tile(self.tiles)
+        self.add_tile(self.tiles)
+        self.gameRunning = True        
+    
     def game_state(self,tiles):      
-        """ Look for available shots to find out if game over or not """
+        """ looks for available shots to find out if game over or not """
         zeros = np.argwhere(tiles == 0)
         if zeros.any():
             return True
@@ -144,9 +145,8 @@ class Jeu:
         return False
             
     
-    def updateTiles(self):
-        """ update the value of the boxes following the move made:
-         and add a 2 or 4""" 
+    def update_tiles(self):
+        """ updates the value of the boxes and adds a 2 or 4""" 
         self.availableSpots = []
         for i in range(0,self.gridSize):
             for j in range(0,self.gridSize):
@@ -155,14 +155,14 @@ class Jeu:
         self.add_tile(self.tiles)
         self.hiScore = max(self.score,self.hiScore)
         self.update()
-        # si plus de coup dispo -> game over
+        # if no move available -> game over
         if not self.game_state(self.tiles):
             self.add_tile(self.tiles)
             self.gameRunning = False
             QtWidgets.QApplication.processEvents()
-#            QtWidgets.QMessageBox.information(self,'','Game Over')
+            QtWidgets.QMessageBox.information(self,'','Game Over')
             
-    def rotateMatrix(self,mat):
+    def rotate_matrix(self,mat):
         """rotates a N x N matrix by 90 degrees in 
         anti-clockwise direction"""
         N = len(mat)
@@ -182,13 +182,13 @@ class Jeu:
                 mat[N-1-y][x] = temp 
 
                 
-    def rotateMatrixMultiple(self,mat,times):
+    def rotate_matrix_multiple(self,mat,times):
         """ numerous rotations """
         for i in range(0,times):
-            self.rotateMatrix(mat)
+            self.rotate_matrix(mat)
     
     def rotate(self,mat,d):
-        """ rotation compared to left movement to use only one fonction move """
+        """ rotates tiles so that the move is equivalent to moving left """
         times = 0
         if d[1] == 1: #right
             times = 2
@@ -196,11 +196,11 @@ class Jeu:
             times = 3
         elif d[0] == 1: #down
             times = 1
-        self.rotateMatrixMultiple(mat,times)
+        self.rotate_matrix_multiple(mat,times)
         return mat
     
     def rotate_back(self,tiles,d):
-        """ rotation back after the movement """
+        """ rotates back after the movement """
         times = 0
         if d[1] == 1: #right
             times = 2
@@ -208,7 +208,7 @@ class Jeu:
             times = 1
         elif d[0] == 1: #down
             times = 3
-        self.rotateMatrixMultiple(tiles,times)
+        self.rotate_matrix_multiple(tiles,times)
         return tiles                                
         
     def move_left(self,tiles):
@@ -246,7 +246,7 @@ class Jeu:
         self.tiles,moved,score = self.moves(self.tiles,direction)
         self.score += score
         if moved:
-            self.updateTiles()
+            self.update_tiles()
             
     def up(self):
         self.up = fn.partial(self.move_tiles,direction="up")
@@ -259,15 +259,21 @@ class Jeu:
 
     def left(self):
         self.left = fn.partial(self.move_tiles,direction="left")                
-        
+
+
 class AI_solver(Jeu):
+    """
+    Artificial Intelligence to solve 2048 game
+    Several resolution methods can be used : Monte-Carlo or scoring methods with 
+    different heuristics (Corner, Pyramid, Merge or Snake) 
+    """
     def __init__(self):
         Jeu.__init__(self)
         QtWidgets.QApplication.processEvents()
         
     def get_score(self,tiles,first_dir,method):
-        """ get score according to the method chosen for resolution """
-        scoring_methods = ["corner","pyramid","empty","snake"]
+        """ gets score according to the method chosen for resolution """
+        scoring_methods = ["corner","pyramid","empty","snake","merge","compound"]
         if method == "montecarlo":
             return self.get_score_montecarlo(tiles,first_dir)
         elif method in scoring_methods:
@@ -275,7 +281,7 @@ class AI_solver(Jeu):
         
     def get_score_montecarlo(self,tiles,first_dir):
         """
-        Given a board and a first move, get a score by playing N_simulation random game
+        Given a board and a first move, gets a score by playing N_simulation random game
         The score is evaluated by averaging the maximum tile obtained in each simulation
         """
         stiles = tiles.copy()
@@ -296,37 +302,61 @@ class AI_solver(Jeu):
             total_score += game_score
             max_tile += np.max(simulation_tiles)
             
-        return max_tile / SIMULATION_NUMBER
+        return max_tile / SIMULATION_NUMBER #returns the macimum tile obtained on average
     
     def get_score_scoring(self,tiles,first_dir,method):
         """ 
-        Given a board and a first move, get a score by playing one game
-        The score is evaluated by comparison with a snake-like pattern
+        Given a board and a first move, gets a score by playing one game
+        The score is evaluated by comparison with an heuristic pattern specified
+        in the 'method' argument
         """
         stiles = tiles.copy()
         stiles, moved, score = self.moves(stiles, first_dir)
         stiles = self.add_tile(stiles)
         if not moved:
             return False
-        return self.evaluation(stiles,method)        
+        return self.evaluation(stiles,score,method)        
 
-    def evaluation(self,tiles,method):
-        """ evaluation fonction according to the methode chosen, used in get_score"""
+    def evaluation(self,tiles,score,method):
+        """ evaluates the board score according to the chosen heuristics"""
         if method == "corner":
+            # gives point to configurations with bigger values in the bottom-right hand corner
             return np.sum(tiles*CORNER)
+        
         elif method == "pyramid":
+            # gives point to configurations with ascending values in pyramidal 
+            # organization towards the bottom-right hand corner 
             return np.sum(tiles*PYRAMID)
+        
         elif method == "empty":
             # gives 1 point per empty cell
             return self.gridSize**2 - len(np.argwhere(self.tiles))
+        
         elif method == "snake":
+            # gives point to configurations with ascending values organized in a 
+            # snake-like pattern
             snake = []
             for i,col in enumerate(zip(*tiles)):
-                snake.extend(reversed(col) if i%2 == 0 else col)
-                
+                snake.extend(reversed(col) if i%2 == 0 else col)                
             m = max(snake)
             return sum(x/10**n for n,x in enumerate(snake)) - math.pow((tiles[3][0] != m)*abs(tiles[3][0]-m),2)
                
+        elif method == "merge":
+            # gives point to configurations that merged tiles compared to precedent 
+            # step
+            return max(score,1)
+        
+        elif method == "compound":
+            # takes into account the merge and snake methods
+            # score = snake_score + k*merge_score
+            snake_score = self.evaluation(tiles,score,"snake")
+            merge_score = self.evaluation(tiles,score,"merge")
+            print("Score de snake: " + str(snake_score))
+            print("Score de merge: " + str(merge_score))
+            k = 1
+            return snake_score + k*merge_score
+            
+        
     def get_best_move(self,tiles,method):
         """ 
         Should I move left,right,up or down?
@@ -351,6 +381,7 @@ class AI_solver(Jeu):
     def auto_solve(self,method):
         """
         Auto-plays the game from current tile until game over
+        Uses the specified method to solve the game
         """
         N=0
         tic = time.perf_counter()
@@ -360,15 +391,18 @@ class AI_solver(Jeu):
             self.update()
             QtWidgets.QApplication.processEvents() #updates the Widget
             N+=1
-#            time.sleep(0.2)
+            time.sleep(0.2)
         toc = time.perf_counter()
         print("Nombre de coups joués:" + str(N))
         print("Temps écoulé:" + str(toc-tic)+"s")
-#        time.sleep(1)
+        time.sleep(1)
         return self.score, np.max(self.tiles),toc-tic,N
            
 class JeuWidget(Widget2048,AI_solver):
-    """ link between class jeu and class Widget, and effect of the keyboard and/or buttons"""
+    """ 
+    Link between class AI_solver and class Widget2048,
+    Connects the keyboard and mouse inputs to AI_solvers's function
+    """
     def __init__(self,parent):
         Widget2048.__init__(self, parent)
         AI_solver.__init__(self)
@@ -403,10 +437,14 @@ class JeuWidget(Widget2048,AI_solver):
             if reply == QtWidgets.QMessageBox.No:
                 self.auto_solve("montecarlo")
             elif reply == QtWidgets.QMessageBox.Yes:
-                self.auto_solve("pyramid")
+                self.auto_solve("snake")
                 
 class Stats(JeuWidget):
-    def __init__(self,parent, N_trials = 1000, method = "pyramid"):
+    """
+    Computes statistical analysis over AI_solver's performances 
+    Launches runs of several games
+    """
+    def __init__(self,parent, N_trials = 1000, method = "compound"):
         JeuWidget.__init__(self,parent)
         self.N_trials = N_trials
         self.method = method
@@ -428,51 +466,28 @@ class Stats(JeuWidget):
         
         return data_score, data_max_tile, data_time, data_N_moves
     
-    def save_data(self,data_score, data_max_tile, data_time, data_N_moves):       
-         f = open("data_pyramid10_1000", "w")
-         f.write("# score max_tile time N_moves\n")        # column names
-         np.savetxt(f, np.array([data_score,data_max_tile,data_time,data_N_moves]).T)
-         # loading:
+    def save_data(self, filename,data_score, data_max_tile, data_time, data_N_moves):      
+        """ writes data in textfile """
+        f = open(filename, "w")
+        f.write("# score max_tile time N_moves\n")        # column names
+        np.savetxt(f, np.array([data_score,data_max_tile,data_time,data_N_moves]).T)
          
     def load_data(self,file_name):
-         data_score, data_max_tile, data_time, data_N_moves = np.loadtxt(file_name, unpack=True)
+        """ reads data from file """
+        data_score, data_max_tile, data_time, data_N_moves = np.loadtxt(file_name, unpack=True)
         
         
-        
-    def plot_stat(self):
-        data_score, data_max_tile, data_time, data_N_moves = self.run_stat()
-        
-        ##
-        plt.figure()
-        plt.plot(range(0,self.N_trials),data_max_tile)
-        plt.plot(range(0,self.N_trials),data_score)
-        plt.show()
-        
-        
-        
-        distrib = []
-        i = 1
-        while i<12:
-            distrib.append(np.count_nonzero(np.array(data_max_tile) == 2**i))
-            i += 1
-        
-            
-            
-        
-    
-S=Stats(None)
-S.show()
-data_score, data_max_tile, data_time, data_N_moves = S.run_stat()
+               
 
-#if __name__=='__main__':
-#    APP = QtWidgets.QApplication.instance()
-#    IS_STANDARD_CONSOLE = (APP is None)
-#    print('running')
-#    if IS_STANDARD_CONSOLE: # launched from standard console (not ipython console)
-#        print('running in console')
-#        APP = QtWidgets.QApplication(["test"])
-#    M = JeuWidget(None)
-#    M.show()
-#    if IS_STANDARD_CONSOLE:
-#        APP.exec_()
+if __name__=='__main__':
+    APP = QtWidgets.QApplication.instance()
+    IS_STANDARD_CONSOLE = (APP is None)
+    print('running')
+    if IS_STANDARD_CONSOLE: # launched from standard console (not ipython console)
+        print('running in console')
+        APP = QtWidgets.QApplication(["test"])
+    M = JeuWidget(None)
+    M.show()
+    if IS_STANDARD_CONSOLE:
+        APP.exec_()
         
